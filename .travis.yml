@@ -1,0 +1,19 @@
+sudo: true
+language: python
+matrix:
+  include:
+    - python: 3.6
+cache: pip
+install:
+  - pip install -r requirements-dev.txt
+  - python setup.py install
+script:
+  - make test
+deploy:
+  provider: pypi
+  user: __token__
+  skip_existing: true
+  on:
+    tags: true
+    branch: master
+    distributions: "sdist bdist_wheel"

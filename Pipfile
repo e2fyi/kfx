@@ -1,0 +1,32 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+
+
+[dev-packages]
+pytest = "==4.*"
+"pytest-cov" = "==2.*"
+mypy = ">=0.720"
+docformatter = "==1.*"
+pylint = "==2.*"
+pydocstyle = "==5.*"
+bandit = "==1.*"
+black = "==19.3b0"
+"flake8" = "==3.*"
+"flake8-isort" = "==2.*"
+"flake8-comprehensions" = "==2.*"
+sphinx = "==2.*"
+sphinx-rtd-theme = "==0.4.*"
+sphinx-autoapi = "==1.*"
+setuptools = ">=41.0.0"
+wheel = ">=0.26"
+pipenv-to-requirements = "==0.8.*"
+m2r = "==0.2.*"
+mistune = "==0.8.*"
+twine = ">=3.*"
+
+[pipenv]
+allow_prereleases = true

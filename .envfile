@@ -1,0 +1,3 @@
+PIPENV_DEFAULT_python_version=3.6
+PIPENV_VENV_IN_PROJECT=true
+MYPYPATH=stubs/

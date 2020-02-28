@@ -1,0 +1,48 @@
+stages:
+  - test
+  - publish
+
+variables:
+  BUCKET_DOCS: grab-ds-pypi
+  TWINE_USERNAME: fakeuser
+  TWINE_PASSWORD: fakepwd
+  TWINE_REPOSITORY_URL: http://pypi.ingress.dev.grabds.com
+
+before_script:
+  - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
+
+######## tests #############
+tests:
+  stage: test
+  image: python:3.6.8
+  tags:
+    - k8s-ds-sg-shared-dev/dsarch-workspace
+  only:
+    - master
+    - merge_requests
+  script:
+    - make test-all
+
+######## publish documentations #############
+publish-to-docs:
+  stage: publish
+  image: python:3.6.8
+  tags:
+    - k8s-ds-sg-shared-dev/dsarch-workspace
+  only:
+    - master
+  script:
+    - make docs
+    - aws s3 sync ./docs s3://$BUCKET_DOCS/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+
+######## publish python package to private pypi server #############
+publish-to-pypi:
+  stage: publish
+  image: python:3.6.8
+  tags:
+    - k8s-ds-sg-shared-dev/dsarch-workspace
+  only:
+    - master
+  script:
+    - make publish
