@@ -1,0 +1,32 @@
+################################################################################
+# This requirements file has been automatically generated from `Pipfile` with
+# `pipenv-to-requirements`
+#
+#
+# This has been done to maintain backward compatibility with tools and services
+# that do not support `Pipfile` yet.
+#
+# Do NOT edit it directly, use `pipenv install [-d]` to modify `Pipfile` and
+# `Pipfile.lock` and then regenerate `requirements*.txt`.
+################################################################################
+
+bandit==1.*
+black==19.3b0
+docformatter==1.*
+flake8-comprehensions==2.*
+flake8-isort==2.*
+flake8==3.*
+m2r==0.2.*
+mistune==0.8.*
+mypy>=0.720
+pipenv-to-requirements==0.8.*
+pydocstyle==5.*
+pylint==2.*
+pytest-cov==2.*
+pytest==4.*
+setuptools>=41.0.0
+sphinx-autoapi==1.*
+sphinx-rtd-theme==0.4.*
+sphinx==2.*
+twine>=3.*
+wheel>=0.26

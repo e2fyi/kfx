@@ -1,4 +1,4 @@
-Welcome to kfp-contrib's documentation!
+Welcome to kfx's documentation!
 ==========================================
 
 .. toctree::

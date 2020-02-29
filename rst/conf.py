@@ -24,7 +24,7 @@ with open("../version.txt", "r") as filein:
     version = filein.read()
 
 # -- Project information -----------------------------------------------------
-project = 'kfp-contrib'
+project = 'kfx'
 copyright = f'{datetime.now().year}, eterna2 <eterna2@hotmail.com>'
 author = 'eterna2 <eterna2@hotmail.com>'
 
@@ -72,7 +72,7 @@ html_split_index = False
 
 # location of source code for autoapi
 autoapi_type = "python"
-autoapi_dirs = ["../contrib"]
+autoapi_dirs = ["../kfx"]
 autoapi_options = ["members", "undoc-members"]
 autoapi_generate_api_docs = True
 autoapi_add_toctree_entry = True
