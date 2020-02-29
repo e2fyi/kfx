@@ -4,7 +4,10 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-
+pydantic = "==1.*"
+typing-extensions = "*"
+kfp = ">=0.2.0"
+coveralls = "*"
 
 [dev-packages]
 pytest = "==4.*"
@@ -27,6 +30,7 @@ pipenv-to-requirements = "==0.8.*"
 m2r = "==0.2.*"
 mistune = "==0.8.*"
 twine = ">=3.*"
+coveralls = "*"
 
 [pipenv]
 allow_prereleases = true
