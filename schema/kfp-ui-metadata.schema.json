@@ -1,0 +1,613 @@
+{
+  "title": "KfpUiMetadata",
+  "description": "Describes the visualization to render inside kubeflow pipeline UI.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "title": "Version",
+      "description": "Version of the kubeflow pipeline ui metadata schema.",
+      "default": 1,
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "outputs": {
+      "title": "Outputs",
+      "description": "List of objects describing the desired kfp visualizations.",
+      "default": [],
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/ConfusionMatrix"
+          },
+          {
+            "$ref": "#/definitions/Roc"
+          },
+          {
+            "$ref": "#/definitions/Markdown"
+          },
+          {
+            "$ref": "#/definitions/Table"
+          },
+          {
+            "$ref": "#/definitions/Tensorboard"
+          },
+          {
+            "$ref": "#/definitions/WebApp"
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "KfpArtifactSchema": {
+      "title": "KfpArtifactSchema",
+      "description": "Schema for columnar data inside a kubeflow pipeline artifact.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "enum": [
+            "CATEGORY",
+            "NUMBER",
+            "KEY",
+            "TEXT",
+            "IMAGE_URL"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "ConfusionMatrix": {
+      "title": "ConfusionMatrix",
+      "description": "Visualizes a confusion matrix.\n\nThe confusion_matrix viewer plots a confusion matrix visualization\nof the data from the given source path, using the schema to parse\nthe data. The labels provide the names of the classes to be plotted\non the x and y axes.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "title": "Format",
+          "description": "The format of the artifact data. The default is `csv`. Note: The only format currently available is `csv`.",
+          "default": "csv",
+          "enum": [
+            "csv"
+          ],
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "description": "A list of strings to be used as headers for the artifact data. For example, in a table these strings are used in the first row.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "title": "Labels",
+          "description": "A list of strings to be used as labels for artifact columns or rows.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_col": {
+          "title": "Predicted Col",
+          "description": "Name of the predicted column.",
+          "type": "string"
+        },
+        "schema": {
+          "title": "Schema",
+          "description": "A list of `{type, name}` objects that specify the schema of the artifact data.",
+          "default": [
+            {
+              "name": "target",
+              "type": "CATEGORY"
+            },
+            {
+              "name": "predicted",
+              "type": "CATEGORY"
+            },
+            {
+              "name": "count",
+              "type": "NUMBER"
+            }
+          ],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KfpArtifactSchema"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "description": "The full path to the data. The available locations include `http`, `https`, `Amazon S3`, `Minio`, and `Google Cloud Storage`. The path can contain wildcards `*`, in which case the Kubeflow Pipelines UI concatenates the data from the matching source files. For some viewers, this field can contain inlined string data instead of a path.",
+          "type": "string"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Applies only to outputs of type `markdown`. Set to `inline` if `source` contains the actual markdown instead of a remote source.",
+          "enum": [
+            "inline",
+            "gcs",
+            "minio",
+            "s3",
+            "http",
+            "https"
+          ],
+          "type": "string"
+        },
+        "target_col": {
+          "title": "Target Col",
+          "description": "Name of the target column.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Types of visualization. e.g. confustion_matrix, markdown, roc, table, tensorboard, or web-app.",
+          "const": "confusion_matrix",
+          "enum": [
+            "confusion_matrix",
+            "markdown",
+            "roc",
+            "table",
+            "tensorboard",
+            "web-app"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "labels",
+        "source"
+      ]
+    },
+    "Roc": {
+      "title": "Roc",
+      "description": "Visualizes a ROC curve.\n\nThe roc viewer plots a receiver operating characteristic (ROC) curve using the\ndata from the given source path. The Kubeflow Pipelines UI assumes that the schema\nincludes three columns with the following names:\n\n- fpr (false positive rate)\n- tpr (true positive rate)\n- thresholds\n\nWhen viewing the ROC curve, you can hover your cursor over the ROC curve to see\nthe threshold value used for the cursor\u2019s closest fpr and tpr values.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "title": "Format",
+          "description": "The format of the artifact data. The default is `csv`. Note: The only format currently available is `csv`.",
+          "default": "csv",
+          "enum": [
+            "csv"
+          ],
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "description": "A list of strings to be used as headers for the artifact data. For example, in a table these strings are used in the first row.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "title": "Labels",
+          "description": "A list of strings to be used as labels for artifact columns or rows.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_col": {
+          "title": "Predicted Col",
+          "description": "Name of the predicted column.",
+          "type": "string"
+        },
+        "schema": {
+          "title": "Schema",
+          "description": "A list of `{type, name}` objects that specify the schema of the artifact data.",
+          "default": [
+            {
+              "name": "fpr",
+              "type": "NUMBER"
+            },
+            {
+              "name": "tpr",
+              "type": "NUMBER"
+            },
+            {
+              "name": "thresholds",
+              "type": "NUMBER"
+            }
+          ],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KfpArtifactSchema"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "description": "The full path to the data. The available locations include `http`, `https`, `Amazon S3`, `Minio`, and `Google Cloud Storage`. The path can contain wildcards `*`, in which case the Kubeflow Pipelines UI concatenates the data from the matching source files. For some viewers, this field can contain inlined string data instead of a path.",
+          "type": "string"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Applies only to outputs of type `markdown`. Set to `inline` if `source` contains the actual markdown instead of a remote source.",
+          "enum": [
+            "inline",
+            "gcs",
+            "minio",
+            "s3",
+            "http",
+            "https"
+          ],
+          "type": "string"
+        },
+        "target_col": {
+          "title": "Target Col",
+          "description": "Name of the target column.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Types of visualization. e.g. confustion_matrix, markdown, roc, table, tensorboard, or web-app.",
+          "const": "roc",
+          "enum": [
+            "confusion_matrix",
+            "markdown",
+            "roc",
+            "table",
+            "tensorboard",
+            "web-app"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ]
+    },
+    "Markdown": {
+      "title": "Markdown",
+      "description": "Visualizes a markdown.\n\nThe markdown viewer renders Markdown strings on the Kubeflow Pipelines UI.\nThe viewer can read the Markdown data from the following locations:\n\n-   A Markdown-formatted string embedded in the source field. The value of the\n    storage field must be `inline`.\n\n-   Markdown code in a remote file, at a path specified in the source field.\n    The storage field can contain any value except `inline`.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "title": "Format",
+          "description": "The format of the artifact data. The default is `csv`. Note: The only format currently available is `csv`.",
+          "enum": [
+            "csv"
+          ],
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "description": "A list of strings to be used as headers for the artifact data. For example, in a table these strings are used in the first row.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "title": "Labels",
+          "description": "A list of strings to be used as labels for artifact columns or rows.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_col": {
+          "title": "Predicted Col",
+          "description": "Name of the predicted column.",
+          "type": "string"
+        },
+        "schema": {
+          "title": "Schema",
+          "description": "A list of `{type, name}` objects that specify the schema of the artifact data.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KfpArtifactSchema"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "description": "The full path to the data. The available locations include `http`, `https`, `Amazon S3`, `Minio`, and `Google Cloud Storage`. The path can contain wildcards `*`, in which case the Kubeflow Pipelines UI concatenates the data from the matching source files. For some viewers, this field can contain inlined string data instead of a path.",
+          "type": "string"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Applies only to outputs of type `markdown`. Set to `inline` if `source` contains the actual markdown instead of a remote source.",
+          "enum": [
+            "inline",
+            "gcs",
+            "minio",
+            "s3",
+            "http",
+            "https"
+          ],
+          "type": "string"
+        },
+        "target_col": {
+          "title": "Target Col",
+          "description": "Name of the target column.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Types of visualization. e.g. confustion_matrix, markdown, roc, table, tensorboard, or web-app.",
+          "const": "markdown",
+          "enum": [
+            "confusion_matrix",
+            "markdown",
+            "roc",
+            "table",
+            "tensorboard",
+            "web-app"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ]
+    },
+    "Table": {
+      "title": "Table",
+      "description": "Visualizes a table.\n\nThe table viewer builds an HTML table out of the data at the given source path,\nwhere the header field specifies the values to be shown in the first row of the\ntable.\n\nThe table supports pagination.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "title": "Format",
+          "description": "The format of the artifact data. The default is `csv`. Note: The only format currently available is `csv`.",
+          "default": "csv",
+          "enum": [
+            "csv"
+          ],
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "description": "A list of strings to be used as headers for the artifact data. For example, in a table these strings are used in the first row.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "title": "Labels",
+          "description": "A list of strings to be used as labels for artifact columns or rows.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_col": {
+          "title": "Predicted Col",
+          "description": "Name of the predicted column.",
+          "type": "string"
+        },
+        "schema": {
+          "title": "Schema",
+          "description": "A list of `{type, name}` objects that specify the schema of the artifact data.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KfpArtifactSchema"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "description": "The full path to the data. The available locations include `http`, `https`, `Amazon S3`, `Minio`, and `Google Cloud Storage`. The path can contain wildcards `*`, in which case the Kubeflow Pipelines UI concatenates the data from the matching source files. For some viewers, this field can contain inlined string data instead of a path.",
+          "type": "string"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Applies only to outputs of type `markdown`. Set to `inline` if `source` contains the actual markdown instead of a remote source.",
+          "enum": [
+            "inline",
+            "gcs",
+            "minio",
+            "s3",
+            "http",
+            "https"
+          ],
+          "type": "string"
+        },
+        "target_col": {
+          "title": "Target Col",
+          "description": "Name of the target column.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Types of visualization. e.g. confustion_matrix, markdown, roc, table, tensorboard, or web-app.",
+          "const": "table",
+          "enum": [
+            "confusion_matrix",
+            "markdown",
+            "roc",
+            "table",
+            "tensorboard",
+            "web-app"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "header",
+        "source"
+      ]
+    },
+    "Tensorboard": {
+      "title": "Tensorboard",
+      "description": "Provides a tensorboard viewer.\n\nThe tensorboard viewer adds a Start Tensorboard button to the output page.\n\nWhen viewing the output page, you can:\n\n-   Click Start Tensorboard to start a TensorBoard Pod in your Kubeflow cluster.\n    The button text switches to Open Tensorboard.\n\n-   Click Open Tensorboard to open the TensorBoard interface in a new tab,\n    pointing to the logdir data specified in the source field.\n\nNote:\nThe Kubeflow Pipelines UI doesn\u2019t fully manage your TensorBoard instances.\nThe \u201cStart Tensorboard\u201d button is a convenience feature so that you don\u2019t have\nto interrupt your workflow when looking at pipeline runs. You\u2019re responsible\nfor recycling or deleting the TensorBoard Pods using your Kubernetes management\ntools.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "title": "Format",
+          "description": "The format of the artifact data. The default is `csv`. Note: The only format currently available is `csv`.",
+          "enum": [
+            "csv"
+          ],
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "description": "A list of strings to be used as headers for the artifact data. For example, in a table these strings are used in the first row.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "title": "Labels",
+          "description": "A list of strings to be used as labels for artifact columns or rows.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_col": {
+          "title": "Predicted Col",
+          "description": "Name of the predicted column.",
+          "type": "string"
+        },
+        "schema": {
+          "title": "Schema",
+          "description": "A list of `{type, name}` objects that specify the schema of the artifact data.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KfpArtifactSchema"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "description": "The full path to the data. The available locations include `http`, `https`, `Amazon S3`, `Minio`, and `Google Cloud Storage`. The path can contain wildcards `*`, in which case the Kubeflow Pipelines UI concatenates the data from the matching source files. For some viewers, this field can contain inlined string data instead of a path.",
+          "type": "string"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Applies only to outputs of type `markdown`. Set to `inline` if `source` contains the actual markdown instead of a remote source.",
+          "enum": [
+            "inline",
+            "gcs",
+            "minio",
+            "s3",
+            "http",
+            "https"
+          ],
+          "type": "string"
+        },
+        "target_col": {
+          "title": "Target Col",
+          "description": "Name of the target column.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Types of visualization. e.g. confustion_matrix, markdown, roc, table, tensorboard, or web-app.",
+          "const": "tensorboard",
+          "enum": [
+            "confusion_matrix",
+            "markdown",
+            "roc",
+            "table",
+            "tensorboard",
+            "web-app"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ]
+    },
+    "WebApp": {
+      "title": "WebApp",
+      "description": "Provides a web-app viewer.\n\nThe web-app viewer provides flexibility for rendering custom output.\nYou can specify an HTML file that your component creates, and the\nKubeflow Pipelines UI renders that HTML in the output page. The HTML\nfile must be self-contained, with no references to other files in\nthe filesystem. The HTML file can contain absolute references to\nfiles on the web. Content running inside the web app is isolated in\nan iframe and cannot communicate with the Kubeflow Pipelines UI.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "title": "Format",
+          "description": "The format of the artifact data. The default is `csv`. Note: The only format currently available is `csv`.",
+          "enum": [
+            "csv"
+          ],
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "description": "A list of strings to be used as headers for the artifact data. For example, in a table these strings are used in the first row.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "title": "Labels",
+          "description": "A list of strings to be used as labels for artifact columns or rows.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_col": {
+          "title": "Predicted Col",
+          "description": "Name of the predicted column.",
+          "type": "string"
+        },
+        "schema": {
+          "title": "Schema",
+          "description": "A list of `{type, name}` objects that specify the schema of the artifact data.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KfpArtifactSchema"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "description": "The full path to the data. The available locations include `http`, `https`, `Amazon S3`, `Minio`, and `Google Cloud Storage`. The path can contain wildcards `*`, in which case the Kubeflow Pipelines UI concatenates the data from the matching source files. For some viewers, this field can contain inlined string data instead of a path.",
+          "type": "string"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Applies only to outputs of type `markdown`. Set to `inline` if `source` contains the actual markdown instead of a remote source.",
+          "enum": [
+            "inline",
+            "gcs",
+            "minio",
+            "s3",
+            "http",
+            "https"
+          ],
+          "type": "string"
+        },
+        "target_col": {
+          "title": "Target Col",
+          "description": "Name of the target column.",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "description": "Types of visualization. e.g. confustion_matrix, markdown, roc, table, tensorboard, or web-app.",
+          "const": "web-app",
+          "enum": [
+            "confusion_matrix",
+            "markdown",
+            "roc",
+            "table",
+            "tensorboard",
+            "web-app"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ]
+    }
+  }
+}

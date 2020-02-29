@@ -7,7 +7,7 @@ dev:
 dists: requirements sdist bdist wheels
 
 docs: force_reload
-	sphinx-build rst docs -b dirhtml -E -P
+	pipenv run sphinx-build rst docs -b dirhtml -E -P
 
 requirements:
 	pipenv run pipenv_to_requirements
@@ -22,27 +22,33 @@ wheels: requirements
 	pipenv run python setup.py bdist_wheel
 
 publish: dists
-	twine upload --verbose --disable-progress-bar dist/*
+	pipenv run twine upload --verbose --disable-progress-bar dist/*
 
 format:
-	docformatter --in-place kfp/**/*.py
-	isort kfp -rc
-	black kfp
+	# docformatter --in-place kfx/**/*.py
+	pipenv run isort kfx -rc
+	pipenv run black kfx
 
 check:
-	isort kfp -rc -c
-	black --check kfp
-	pylint kfp
-	flake8
-	mypy kfp
-	pydocstyle
-	bandit -r kfp
+	pipenv run isort kfx -rc -c
+	pipenv run black --check kfx
+	pipenv run pylint kfx
+	pipenv run flake8
+	pipenv run mypy kfx
+	# pydocstyle
+	pipenv run bandit -r kfx -x *_test.py
 
 test: check
-	pytest --cov=kfp
+	pipenv run pytest --cov=kfx
 
 test-all: test dists
-	twine check dist/*
+	pipenv run twine check dist/*
 
 test-only: env
-	pytest --cov=kfp
+	pipenv run pytest --cov=kfx
+
+test-ci: test-all
+	pipenv run coveralls
+
+schema: force_reload
+	PYTHONPATH=${PWD} ./scripts/generate_schemas.py
