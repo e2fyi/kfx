@@ -2,20 +2,22 @@ sudo: true
 language: python
 matrix:
   include:
-    - python: 3.6
-    - python: 3.7
+  - python: 3.6
+  - python: 3.7
 cache: pip
 install:
-  - pip install pipenv
-  - pip install -r requirements-dev.txt
-  - python setup.py install
+- pip install pipenv
+- pip install -r requirements-dev.txt
+- python setup.py install
 script:
-  - make test
+- make test
 deploy:
   provider: pypi
   user: __token__
+  password:
+    secure: mPbdQCNOzduiFcSrfRbKdCHVjEKYCs51DqV8yZ9+T2dW5T7zhhwWlzHsDExlEdCHNRWNC4Rwm2uaI0cUgKB6voS4BwTg+XYZephs9sJJMMJu3aC1rBcPBKjRcqE7ZTKVQZXr7tqWctMfLt3OxMumlY7uKOvPpu7/p6aM/10+myVLmCmKzY2qXLEUPtmzIzC6lIkU5bjOUIF42s3VyDBj0wBd+esPBjf3alXtjLYmzsX4/PuEX5fBfaA0uZCuexq6VUD5glhfwggLyEnH2xVZyl11f47/KJaytLTFIiiQ9DRFAdHSkH6gposbj9XB7cnPmjh1O+NLZ/CgpkRdeDYYvZnwdnZk1Iba0YJjXgvtDOXJIOPEPjED+uw5vuji22OFDi+fsDB+Qw4WRMZVRftPiASrnNwFqEglTXidUx7rqI1ErmnbAI+oKTAI3sDPMEys8jyzLvp0fUlcrcJTnaxjUWOXOXr7x/5j/wR/oSotwFOyYYhHGh8IaDkU+JeyFZYBN3ZAdDptCOez/XSYwxZV55x1AcgDTUKqhe/A1rIohGnuv7KhM/0qEKWpdFdQ11k9slDVcaUQZuGu7HXG80f+T8XwEIL2TkA+hJge2QfY2R8WRBn633vGxRhH4nDQMddbY+X2xJ9mBptXX9rnhDoCHqwIp7eZ+D5ah/Q4zqfyNf4=
   skip_existing: true
   on:
     tags: true
     branch: master
-    distributions: "sdist bdist_wheel"
+    distributions: sdist bdist_wheel
