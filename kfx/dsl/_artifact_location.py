@@ -5,9 +5,10 @@ import os.path
 from typing import Callable, NamedTuple
 
 import kfp.dsl
-import kfp.compiler._k8s_helper as _kfp_k8s_helper
 
 from kubernetes import client as k8s_client
+
+from kfx.dsl._compat import sanitize_k8s_name
 
 DEFAULT_KEY_FORMAT = "{{workflow.name}}/{{pod.name}}"
 
@@ -24,7 +25,9 @@ def set_workflow_env(
         name="WORKFLOW_DEFAULT_KEY_FORMAT", template="{{workflow.name}}/{{pod.name}}"
     )
 ) -> Callable[[kfp.dsl.ContainerOp], kfp.dsl.ContainerOp]:
-    """Setup a kfp op to pass in the workflow variables as an environment var.
+    """Modifier for kubeflow pipelines tasks.
+
+    Setup a kfp op to pass in the workflow variables as an environment var.
 
     See https://github.com/argoproj/argo/blob/master/docs/variables.md
 
@@ -45,6 +48,9 @@ def set_workflow_env(
         @kfp.dsl.pipeline()
         def simple_pipeline():
             op = echo_workflow_vars()
+
+            # op will have an environment variable "WORKFLOW_NAME"
+            # that provides the name of the workflow
             op.apply(kfxutils.set_workflow_env(
                 kfxutils.WorkflowVars("WORKFLOW_NAME", template="{{workflow.name}}")
             ))
@@ -73,7 +79,9 @@ def set_pod_metadata_envs(
     namespace: str = "NAMESPACE",
     node_name: str = "NODE_NAME",
 ) -> Callable[[kfp.dsl.ContainerOp], kfp.dsl.ContainerOp]:
-    """Setup a kfp op to pass in the pod name, namespace, and node name as env
+    """Modifier for kubeflow pipelines tasks.
+
+    Setup a kfp op to pass in the pod name, namespace, and node name as env
     var.
 
     Example::
@@ -129,40 +137,58 @@ def set_pod_metadata_envs(
     return apply_pod_metadata_envs
 
 
-# https://github.com/argoproj/argo/blob/51cdf95b18c8532f0bdb72c7ca20d56bdafc3a60/docs/workflow-controller-configmap.yaml
 class ArtifactLocationHelper:
-    """Helper class to generate artifact location from argo configs.
+    """Helper class to generate artifact location based on provided argo config.
 
-    Example::
+    See an example of an `Argo configmap <https://github.com/argoproj/argo/blob/master/docs/workflow-controller-configmap.yaml>`_.
+
+    ::
+
+        import kfp.components
+        import kfp.dsl
+        import kfx.dsl
 
 
-        helper = kfxutils.ArtifactLocationHelper(
+        helper = kfx.dsl.ArtifactLocationHelper(
             scheme="minio", bucket="mlpipeline", key_prefix="artifacts/"
         )
 
         @kfp.components.func_to_container_op
         def test_op(
-            mlpipeline_ui_metadata: OutputTextFile(str),
-            markdown_file: OutputTextFile(str),
+            mlpipeline_ui_metadata: OutputTextFile(str), markdown_data_file: OutputTextFile(str)
         ):
+            "A test kubeflow pipeline task."
 
-            import kfx.lib.utils as kfxutils
-            import kfx.lib.vis as kfxvis
+            import kfx.dsl
+            import kfx.vis
 
-            markdown_file.write("### hello world")
-            ui_metadata = kfxvis.kfp_ui_metadata(
-                [kfxvis.markdown(kfxutils.get_artifact_uri("markdown"))]
+            # write the markdown to the `markdown-data` artifact
+            markdown_data_file.write("### hello world")
+
+            # creates an ui metadata object
+            ui_metadata = kfx.vis.kfp_ui_metadata(
+                # Describes the vis to generate in the kubeflow pipeline UI.
+                # In this case, a markdown vis from a markdown artifact.
+                [kfx.vis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
+                # `kfp_artifact` provides the reference to data artifact created
+                # inside this task
             )
-            mlpipeline_ui_metadata.write(kfxvis.asjson(ui_metadata))
+
+            # writes the ui metadata object as the `mlpipeline-ui-metadata` artifact
+            mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
+
+            # prints the uri to the markdown artifact
             print(ui_metadata.outputs[0].source)
 
 
         @kfp.dsl.pipeline()
         def test_pipeline():
-            op: kfp.dsl.ContainerOp = test_op()
-            op.apply(helper.set_envs())
+            "A test kubeflow pipeline"
 
-            assert is_envs_similar(op.container.env, expected_envs)
+            op: kfp.dsl.ContainerOp = test_op()
+
+            # modify kfp operator with artifact location metadata through env vars
+            op.apply(helper.set_envs())
     """
 
     artifact_loc_env: str = "WORKFLOW_ARTIFACT_LOCATION"
@@ -222,7 +248,7 @@ class ArtifactLocationHelper:
 
         def mod1(task: kfp.dsl.ContainerOp):
             task.container.image = image
-            artifact_prefix = _kfp_k8s_helper.sanitize_k8s_name(task.name)
+            artifact_prefix = sanitize_k8s_name(task.name)
             return set_workflow_env(
                 WorkflowVars(name=self.artifact_prefix_env, template=artifact_prefix)
             )(task)
@@ -236,49 +262,91 @@ class ArtifactLocationHelper:
         return lambda task: mod2(mod1(task))
 
 
-def get_artifact_uri(name: str, ext: str = ".tgz") -> str:
-    """This function should be used inside the kfp task to get the artifact.
+def _sanitize_artifact_name(name: str) -> str:
+    """Sanitize the artifact name based on k8s resource naming convention.
 
-    uri, which then can be provided to the kubeflow pipeline UI - i.e. as the
+    Also remove suffixes "_path" and "_file". (See this `comment <https://github.com/kubeflow/pipelines/blob/4cb81ea047361ddce7ce8b0b68133b0a92724588/sdk/python/kfp/components/_python_op.py#L327>'_.)
+
+
+    Args:
+        name (str): [description]
+
+    Returns:
+        str: [description]
+    """
+    if name.endswith("_path"):
+        name = name[0 : -len("_path")]
+    elif name.endswith("_file"):
+        name = name[0 : -len("_file")]
+    return sanitize_k8s_name(name)  # type: ignore
+
+
+def kfp_artifact(name: str, ext: str = ".tgz", sanitize_name: bool = True) -> str:
+    """Reference to a kfp artifact that is created within the kubeflow pipeline task.
+
+    This function should be used inside the kfp task. It returns the artifact uri,
+    which then can be provided to the kubeflow pipeline UI - i.e. as the
     `source` field inside kubeflow pipeline ui metadata.
 
-    NOTE
-    Artifact name with '_file' or '_path' will be removed.
+    ::
 
-    See
-    https://github.com/kubeflow/pipelines/blob/4cb81ea047361ddce7ce8b0b68133b0a92724588/sdk/python/kfp/components/_python_op.py#L322
+        import kfp.components
+        import kfp.dsl
+        import kfx.dsl
 
-    Example::
+
+        helper = kfx.dsl.ArtifactLocationHelper(
+            scheme="minio", bucket="mlpipeline", key_prefix="artifacts/"
+        )
 
         @kfp.components.func_to_container_op
         def test_op(
-            mlpipeline_ui_metadata: OutputTextFile(str),
-            markdown_file: OutputTextFile(str),
+            mlpipeline_ui_metadata: OutputTextFile(str), markdown_data_file: OutputTextFile(str)
         ):
+            "A test kubeflow pipeline task."
 
-            import kfx.lib.utils as kfxutils
-            import kfx.lib.vis as kfxvis
+            import kfx.dsl
+            import kfx.vis
 
-            markdown_file.write("### hello world")
-            ui_metadata = kfxvis.kfp_ui_metadata(
-                # markdown_file -> markdown
-                [kfxvis.markdown(kfxutils.get_artifact_uri("markdown"))]
+            # write the markdown to the `markdown-data` artifact
+            markdown_data_file.write("### hello world")
+
+            # creates an ui metadata object
+            ui_metadata = kfx.vis.kfp_ui_metadata(
+                # Describes the vis to generate in the kubeflow pipeline UI.
+                # In this case, a markdown vis from a markdown artifact.
+                [kfx.vis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
+                # `kfp_artifact` provides the reference to data artifact created
+                # inside this task
             )
 
-            # mlpipeline_ui_metadata -> mlpipeline-ui-metadata
-            mlpipeline_ui_metadata.write(kfxvis.asjson(ui_metadata))
+            # writes the ui metadata object as the `mlpipeline-ui-metadata` artifact
+            mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
 
+            # prints the uri to the markdown artifact
             print(ui_metadata.outputs[0].source)
+
+
+        @kfp.dsl.pipeline()
+        def test_pipeline():
+            "A test kubeflow pipeline"
+
+            op: kfp.dsl.ContainerOp = test_op()
+
+            # modify kfp operator with artifact location metadata through env vars
+            op.apply(helper.set_envs())
 
 
     Args:
         name (str): name of the artifact.
         ext (str, optional): extension for the artifact. Defaults to ".tgz".
+        sanitize_name (bool, optional): whether to sanitize the artifact name. Defaults to True.
 
     Returns:
         str: uri to the artifact which can be provided to kfp ui.
     """
-    # sanitize_k8s_name
     artifact_loc = os.environ[ArtifactLocationHelper.artifact_loc_env]
     artifact_prefix = os.environ[ArtifactLocationHelper.artifact_prefix_env]
-    return os.path.join(artifact_loc, "%s-%s%s" % (artifact_prefix, name, ext))
+    artifact_name = _sanitize_artifact_name(name) if sanitize_name else name
+
+    return os.path.join(artifact_loc, "%s-%s%s" % (artifact_prefix, artifact_name, ext))

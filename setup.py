@@ -41,7 +41,7 @@ setup(
     package_data={"": ["version.txt", "requirements.txt", "requirements-dev.txt"]},
     keywords="kfx,kubeflow,pipelines,contrib,sdk",
     name="kfx",
-    packages=["kfx.dsl", "kfx.components", "kfx.lib"],
+    packages=["kfx.dsl", "kfx.vis"],
     setup_requires=setup_requirements,
     python_requires=">=3.6",
     install_requires=requirements,
