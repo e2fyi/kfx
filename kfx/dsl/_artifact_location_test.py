@@ -1,4 +1,6 @@
 """Tests for kfx.lib.utils."""
+import os
+
 from typing import List
 
 import kfp.dsl
@@ -9,7 +11,7 @@ import kubernetes.client as k8s_client
 from kfp.compiler import Compiler
 from kfp.components import OutputTextFile
 
-import kfx.lib.utils as kfxutils
+import kfx.dsl._artifact_location
 
 
 def is_envs_similar(
@@ -34,8 +36,10 @@ def test_set_workflow_name(tmp_path):
     def test_pipeline():
         op: kfp.dsl.ContainerOp = test_op()
         op.apply(
-            kfxutils.set_workflow_env(
-                kfxutils.WorkflowVars("WORKFLOW_NAME", template="{{workflow.name}}")
+            kfx.dsl._artifact_location.set_workflow_env(
+                kfx.dsl._artifact_location.WorkflowVars(
+                    "WORKFLOW_NAME", template="{{workflow.name}}"
+                )
             )
         )
 
@@ -88,7 +92,7 @@ def test_set_pod_metadata(tmp_path):
     @kfp.dsl.pipeline()
     def test_pipeline():
         op: kfp.dsl.ContainerOp = test_op()
-        op.apply(kfxutils.set_pod_metadata_envs())
+        op.apply(kfx.dsl._artifact_location.set_pod_metadata_envs())
 
         assert is_envs_similar(op.container.env, expected)
 
@@ -106,21 +110,22 @@ def test_artifact_location_helper(tmp_path):
         },
     ]
 
-    helper = kfxutils.ArtifactLocationHelper(
+    helper = kfx.dsl._artifact_location.ArtifactLocationHelper(
         scheme="minio", bucket="mlpipeline", key_prefix="artifacts/"
     )
 
     @kfp.components.func_to_container_op
     def test_op(
-        mlpipeline_ui_metadata: OutputTextFile(str), markdown_file: OutputTextFile(str)
+        mlpipeline_ui_metadata: OutputTextFile(str),
+        markdown_data_file: OutputTextFile(str),
     ):
 
-        import kfx.lib.utils as kfxutils
-        import kfx.lib.vis as kfxvis
+        import kfx.dsl
+        import kfx.vis as kfxvis
 
-        markdown_file.write("### hello world")
+        markdown_data_file.write("### hello world")
         ui_metadata = kfxvis.kfp_ui_metadata(
-            [kfxvis.markdown(kfxutils.get_artifact_uri("markdown"))]
+            [kfxvis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
         )
         mlpipeline_ui_metadata.write(kfxvis.asjson(ui_metadata))
         print(ui_metadata.outputs[0].source)
@@ -136,3 +141,23 @@ def test_artifact_location_helper(tmp_path):
     Compiler().compile(test_pipeline, str(outfile))
     # print(outfile.read_text())
     # assert False
+
+
+def test_kfp_artifact():
+
+    os.environ[
+        kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_loc_env
+    ] = "gcs://your_bucket/pipelines/artifact"
+    os.environ[
+        kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_prefix_env
+    ] = "test-task"
+
+    assert (
+        kfx.dsl.kfp_artifact("some_artifact_file")
+        == "gcs://your_bucket/pipelines/artifact/test-task-some-artifact.tgz"
+    )
+
+    assert (
+        kfx.dsl.kfp_artifact("some_artifact_path")
+        == "gcs://your_bucket/pipelines/artifact/test-task-some-artifact.tgz"
+    )

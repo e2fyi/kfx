@@ -31,6 +31,7 @@ m2r = "==0.2.*"
 mistune = "==0.8.*"
 twine = ">=3.*"
 coveralls = "*"
+recommonmark = "*"
 
 [pipenv]
 allow_prereleases = true

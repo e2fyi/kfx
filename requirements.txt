@@ -10,6 +10,7 @@
 # `Pipfile.lock` and then regenerate `requirements*.txt`.
 ################################################################################
 
+coveralls
 kfp>=0.2.0
 pydantic==1.*
 typing-extensions

@@ -1,5 +1,5 @@
 """Tests for kfx.lib.vis."""
-import kfx.lib.vis as kfxvis
+import kfx.vis._helpers as kfxvis
 
 
 def test_confusion_matrix():

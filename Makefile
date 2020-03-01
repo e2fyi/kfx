@@ -35,7 +35,7 @@ check:
 	pipenv run pylint kfx
 	pipenv run flake8
 	pipenv run mypy kfx
-	# pydocstyle
+	pipenv run pydocstyle
 	pipenv run bandit -r kfx -x *_test.py
 
 test: check
@@ -52,3 +52,7 @@ test-ci: test-all
 
 schema: force_reload
 	PYTHONPATH=${PWD} ./scripts/generate_schemas.py
+
+commit: docs requirements force_reload
+	git add .
+	git commit

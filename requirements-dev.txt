@@ -12,6 +12,7 @@
 
 bandit==1.*
 black==19.3b0
+coveralls
 docformatter==1.*
 flake8-comprehensions==2.*
 flake8-isort==2.*
@@ -24,6 +25,7 @@ pydocstyle==5.*
 pylint==2.*
 pytest-cov==2.*
 pytest==4.*
+recommonmark
 setuptools>=41.0.0
 sphinx-autoapi==1.*
 sphinx-rtd-theme==0.4.*
