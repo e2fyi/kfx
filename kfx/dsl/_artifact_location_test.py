@@ -102,12 +102,14 @@ def test_set_pod_metadata(tmp_path):
 
 def test_artifact_location_helper(tmp_path):
     expected_envs = [
-        {"name": "WORKFLOW_ARTIFACT_PREFIX", "value": "test-op", "value_from": None},
+        {"name": "WORKFLOW_ARTIFACT_STORAGE", "value": "minio", "value_from": None},
+        {"name": "WORKFLOW_ARTIFACT_BUCKET", "value": "mlpipeline", "value_from": None},
         {
-            "name": "WORKFLOW_ARTIFACT_LOCATION",
-            "value": "minio://mlpipeline/artifacts/{{workflow.name}}/{{pod.name}}",
+            "name": "WORKFLOW_ARTIFACT_KEY_PREFIX",
+            "value": "artifacts/{{workflow.name}}/{{pod.name}}",
             "value_from": None,
         },
+        {"name": "WORKFLOW_ARTIFACT_PREFIX", "value": "test-op", "value_from": None},
     ]
 
     helper = kfx.dsl._artifact_location.ArtifactLocationHelper(
@@ -118,16 +120,49 @@ def test_artifact_location_helper(tmp_path):
     def test_op(
         mlpipeline_ui_metadata: OutputTextFile(str),
         markdown_data_file: OutputTextFile(str),
+        vega_data_file: OutputTextFile(str),
     ):
+        import json
 
         import kfx.dsl
-        import kfx.vis as kfxvis
+        import kfx.vis
+        import kfx.vis.vega
+
+        data = [
+            {"a": "A", "b": 28},
+            {"a": "B", "b": 55},
+            {"a": "C", "b": 43},
+            {"a": "D", "b": 91},
+            {"a": "E", "b": 81},
+            {"a": "F", "b": 53},
+            {"a": "G", "b": 19},
+            {"a": "H", "b": 87},
+            {"a": "I", "b": 52},
+        ]
+        vega_data_file.write(json.dumps(data))
+
+        spec = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+            "description": "A simple bar chart",
+            "data": {
+                "url": kfx.dsl.KfpArtifact("vega_data_file"),
+                "format": {"type": "json"},
+            },
+            "mark": "bar",
+            "encoding": {
+                "x": {"field": "a", "type": "ordinal"},
+                "y": {"field": "b", "type": "quantitative"},
+            },
+        }
 
         markdown_data_file.write("### hello world")
-        ui_metadata = kfxvis.kfp_ui_metadata(
-            [kfxvis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
+        ui_metadata = kfx.vis.kfp_ui_metadata(
+            [
+                kfx.vis.markdown(kfx.dsl.KfpArtifact("markdown_data_file")),
+                kfx.vis.vega.vega_web_app(spec),
+            ]
         )
-        mlpipeline_ui_metadata.write(kfxvis.asjson(ui_metadata))
+        mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
         print(ui_metadata.outputs[0].source)
 
     @kfp.dsl.pipeline()
@@ -139,25 +174,31 @@ def test_artifact_location_helper(tmp_path):
 
     outfile = tmp_path / "pipeline.yaml"
     Compiler().compile(test_pipeline, str(outfile))
-    # print(outfile.read_text())
-    # assert False
+    print(outfile.read_text())
+    assert False
 
 
 def test_kfp_artifact():
 
     os.environ[
-        kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_loc_env
-    ] = "gcs://your_bucket/pipelines/artifact"
+        kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_storage_env
+    ] = "gcs"
+    os.environ[
+        kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_bucket_env
+    ] = "your_bucket"
+    os.environ[
+        kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_key_prefix_env
+    ] = "pipelines/artifact"
     os.environ[
         kfx.dsl._artifact_location.ArtifactLocationHelper.artifact_prefix_env
     ] = "test-task"
 
     assert (
-        kfx.dsl.kfp_artifact("some_artifact_file")
+        str(kfx.dsl.KfpArtifact("some_artifact_file"))
         == "gcs://your_bucket/pipelines/artifact/test-task-some-artifact.tgz"
     )
 
     assert (
-        kfx.dsl.kfp_artifact("some_artifact_path")
+        str(kfx.dsl.KfpArtifact("some_artifact_path"))
         == "gcs://your_bucket/pipelines/artifact/test-task-some-artifact.tgz"
     )

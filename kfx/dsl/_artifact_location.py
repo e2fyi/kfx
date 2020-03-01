@@ -169,8 +169,8 @@ class ArtifactLocationHelper:
             ui_metadata = kfx.vis.kfp_ui_metadata(
                 # Describes the vis to generate in the kubeflow pipeline UI.
                 # In this case, a markdown vis from a markdown artifact.
-                [kfx.vis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
-                # `kfp_artifact` provides the reference to data artifact created
+                [kfx.vis.markdown(kfx.dsl.KfpArtifact("markdown_data_file"))]
+                # `KfpArtifact` provides the reference to data artifact created
                 # inside this task
             )
 
@@ -191,8 +191,10 @@ class ArtifactLocationHelper:
             op.apply(helper.set_envs())
     """
 
-    artifact_loc_env: str = "WORKFLOW_ARTIFACT_LOCATION"
     artifact_prefix_env: str = "WORKFLOW_ARTIFACT_PREFIX"
+    artifact_storage_env: str = "WORKFLOW_ARTIFACT_STORAGE"
+    artifact_bucket_env: str = "WORKFLOW_ARTIFACT_BUCKET"
+    artifact_key_prefix_env: str = "WORKFLOW_ARTIFACT_KEY_PREFIX"
 
     def __init__(
         self, scheme: str, bucket: str, key_prefix: str = "", key_format: str = ""
@@ -219,16 +221,16 @@ class ArtifactLocationHelper:
     # artifact location is defaulted using the following formula:
     #   <worflow_name>/<pod_name>/<artifact_name>.tgz
     #   (e.g. myworkflowartifacts/argo-wf-fhljp/argo-wf-fhljp-123291312382/src.tgz)
-    def get_artifact_location(self) -> str:
-        """Returns the path to the artifact location.
+    def _get_key_prefix(self) -> str:
+        """Returns artifact key prefix.
 
         Returns:
-            str: path to the artifact location.
+            str: artifact key prefix
         """
         if self.key_format:
-            return os.path.join(self.bucket, self.key_format)
+            return self.key_format
 
-        return os.path.join(self.bucket, self.key_prefix, DEFAULT_KEY_FORMAT)
+        return os.path.join(self.key_prefix, DEFAULT_KEY_FORMAT)
 
     def set_envs(
         self, image: str = "e2fyi/kfx:latest"
@@ -246,20 +248,21 @@ class ArtifactLocationHelper:
             Callable[[kfp.dsl.ContainerOp], kfp.dsl.ContainerOp]: modified task.
         """
 
-        def mod1(task: kfp.dsl.ContainerOp):
+        def set_workflow_envs(task: kfp.dsl.ContainerOp):
             task.container.image = image
             artifact_prefix = sanitize_k8s_name(task.name)
-            return set_workflow_env(
-                WorkflowVars(name=self.artifact_prefix_env, template=artifact_prefix)
-            )(task)
 
-        mod2 = set_workflow_env(
-            WorkflowVars(
-                name=self.artifact_loc_env,
-                template="%s://%s" % (self.scheme, self.get_artifact_location()),
-            )
-        )
-        return lambda task: mod2(mod1(task))
+            for name, value in [
+                (self.artifact_storage_env, self.scheme),
+                (self.artifact_bucket_env, self.bucket),
+                (self.artifact_key_prefix_env, self._get_key_prefix()),
+                (self.artifact_prefix_env, artifact_prefix),
+            ]:
+                task.container.add_env_variable(
+                    k8s_client.V1EnvVar(name=name, value=value)
+                )
+
+        return set_workflow_envs
 
 
 def _sanitize_artifact_name(name: str) -> str:
@@ -281,72 +284,125 @@ def _sanitize_artifact_name(name: str) -> str:
     return sanitize_k8s_name(name)  # type: ignore
 
 
-def kfp_artifact(name: str, ext: str = ".tgz", sanitize_name: bool = True) -> str:
-    """Reference to a kfp artifact that is created within the kubeflow pipeline task.
+class KfpArtifact:
+    """Class to represent a kubeflow pipeline artifact created inside the pipeline task."""
 
-    This function should be used inside the kfp task. It returns the artifact uri,
-    which then can be provided to the kubeflow pipeline UI - i.e. as the
-    `source` field inside kubeflow pipeline ui metadata.
+    def __init__(self, name: str, ext: str = ".tgz", sanitize_name: bool = True):
+        """Reference to a kfp artifact that is created within the kubeflow pipeline task.
 
-    ::
+        This function should be used inside the kfp task. It returns the artifact uri,
+        which then can be provided to the kubeflow pipeline UI - i.e. as the
+        `source` field inside kubeflow pipeline ui metadata.
 
-        import kfp.components
-        import kfp.dsl
-        import kfx.dsl
+        ::
 
-
-        helper = kfx.dsl.ArtifactLocationHelper(
-            scheme="minio", bucket="mlpipeline", key_prefix="artifacts/"
-        )
-
-        @kfp.components.func_to_container_op
-        def test_op(
-            mlpipeline_ui_metadata: OutputTextFile(str), markdown_data_file: OutputTextFile(str)
-        ):
-            "A test kubeflow pipeline task."
-
+            import kfp.components
+            import kfp.dsl
             import kfx.dsl
-            import kfx.vis
 
-            # write the markdown to the `markdown-data` artifact
-            markdown_data_file.write("### hello world")
 
-            # creates an ui metadata object
-            ui_metadata = kfx.vis.kfp_ui_metadata(
-                # Describes the vis to generate in the kubeflow pipeline UI.
-                # In this case, a markdown vis from a markdown artifact.
-                [kfx.vis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
-                # `kfp_artifact` provides the reference to data artifact created
-                # inside this task
+            helper = kfx.dsl.ArtifactLocationHelper(
+                scheme="minio", bucket="mlpipeline", key_prefix="artifacts/"
             )
 
-            # writes the ui metadata object as the `mlpipeline-ui-metadata` artifact
-            mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
+            @kfp.components.func_to_container_op
+            def test_op(
+                mlpipeline_ui_metadata: OutputTextFile(str), markdown_data_file: OutputTextFile(str)
+            ):
+                "A test kubeflow pipeline task."
 
-            # prints the uri to the markdown artifact
-            print(ui_metadata.outputs[0].source)
+                import json
+
+                import kfx.dsl
+                import kfx.vis
+                import kfx.vis.vega
+
+                data = [
+                    {"a": "A", "b": 28},
+                    {"a": "B", "b": 55},
+                    {"a": "C", "b": 43},
+                    {"a": "D", "b": 91},
+                    {"a": "E", "b": 81},
+                    {"a": "F", "b": 53},
+                    {"a": "G", "b": 19},
+                    {"a": "H", "b": 87},
+                    {"a": "I", "b": 52},
+                ]
+                vega_data_file.write(json.dumps(data))
+
+                # `KfpArtifact` provides the reference to data artifact created
+                # inside this task
+                spec = {
+                    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+                    "description": "A simple bar chart",
+                    "data": {
+                        "url": kfx.dsl.KfpArtifact("vega_data_file"),
+                        "format": {"type": "json"},
+                    },
+                    "mark": "bar",
+                    "encoding": {
+                        "x": {"field": "a", "type": "ordinal"},
+                        "y": {"field": "b", "type": "quantitative"},
+                    },
+                }
+
+                # write the markdown to the `markdown-data` artifact
+                markdown_data_file.write("### hello world")
+
+                # creates an ui metadata object
+                ui_metadata = kfx.vis.kfp_ui_metadata(
+                    # Describes the vis to generate in the kubeflow pipeline UI.
+                    [
+                        # markdown vis from a markdown artifact.
+                        # `KfpArtifact` provides the reference to data artifact created
+                        # inside this task
+                        kfx.vis.markdown(kfx.dsl.KfpArtifact("markdown_data_file")),
+                        # a vega web app from the vega data artifact.
+                        kfx.vis.vega.vega_web_app(spec),
+                    ]
+                )
+
+                # writes the ui metadata object as the `mlpipeline-ui-metadata` artifact
+                mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
+
+                # prints the uri to the markdown artifact
+                print(ui_metadata.outputs[0].source)
 
 
-        @kfp.dsl.pipeline()
-        def test_pipeline():
-            "A test kubeflow pipeline"
+            @kfp.dsl.pipeline()
+            def test_pipeline():
+                "A test kubeflow pipeline"
 
-            op: kfp.dsl.ContainerOp = test_op()
+                op: kfp.dsl.ContainerOp = test_op()
 
-            # modify kfp operator with artifact location metadata through env vars
-            op.apply(helper.set_envs())
+                # modify kfp operator with artifact location metadata through env vars
+                op.apply(helper.set_envs())
 
 
-    Args:
-        name (str): name of the artifact.
-        ext (str, optional): extension for the artifact. Defaults to ".tgz".
-        sanitize_name (bool, optional): whether to sanitize the artifact name. Defaults to True.
+        Args:
+            name (str): name of the artifact.
+            ext (str, optional): extension for the artifact. Defaults to ".tgz".
+            sanitize_name (bool, optional): whether to sanitize the artifact name. Defaults to True.
 
-    Returns:
-        str: uri to the artifact which can be provided to kfp ui.
-    """
-    artifact_loc = os.environ[ArtifactLocationHelper.artifact_loc_env]
-    artifact_prefix = os.environ[ArtifactLocationHelper.artifact_prefix_env]
-    artifact_name = _sanitize_artifact_name(name) if sanitize_name else name
+        Returns:
+            str: uri to the artifact which can be provided to kfp ui.
+        """
+        self.storage = os.environ[ArtifactLocationHelper.artifact_storage_env]
+        self.bucket = os.environ[ArtifactLocationHelper.artifact_bucket_env]
+        self.key_prefix = os.environ[ArtifactLocationHelper.artifact_key_prefix_env]
+        self.prefix = os.environ[ArtifactLocationHelper.artifact_prefix_env]
+        self.name = _sanitize_artifact_name(name) if sanitize_name else name
+        self.ext = ext
+        self.key = os.path.join(
+            self.key_prefix, "%s-%s%s" % (self.prefix, self.name, self.ext)
+        )
 
-    return os.path.join(artifact_loc, "%s-%s%s" % (artifact_prefix, artifact_name, ext))
+    @property
+    def source(self) -> str:
+        """Url to the artifact source."""
+        path = os.path.join(self.bucket, self.key)
+        return "%s://%s" % (self.storage, path)
+
+    def __str__(self):
+        """Url to the artifact source."""
+        return self.source

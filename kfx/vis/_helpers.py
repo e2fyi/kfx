@@ -3,6 +3,7 @@ from typing import List, Union, Optional
 
 from pydantic import BaseModel
 
+from kfx.dsl import KfpArtifact
 from kfx.vis.models import (
     Roc,
     Table,
@@ -19,7 +20,7 @@ KFP_UI_METADATA_PATH = "/mlpipeline-ui-metadata.json"
 
 
 def confusion_matrix(
-    source: str,
+    source: Union[str, KfpArtifact],
     labels: List[str],
     artifact_format: Union[KfpArtifactDataFormat, str] = "csv",
     **kwargs,
@@ -32,7 +33,7 @@ def confusion_matrix(
     - count
 
     Args:
-        source (str): Full path to the data artifact.
+        source (Union[str, KfpArtifact]): Full path to the data artifact.
         labels (List[str]): Names of the classes to be plotted on the x and y axes.
         artifact_format (Union[KfpArtifactDataFormat, str], optional):
             Data format for the artifact. Defaults to "csv".
@@ -41,17 +42,17 @@ def confusion_matrix(
         ConfusionMatrix: pydantic data object.
     """
     return ConfusionMatrix(
-        source=source, artifact_format=artifact_format, labels=labels, **kwargs
+        source=str(source), artifact_format=artifact_format, labels=labels, **kwargs
     )
 
 
 def markdown(
-    source: str, storage: Optional[Union[KfpStorage, str]] = None, **kwargs
+    source: Union[str, KfpArtifact], storage: Optional[Union[KfpStorage, str]] = None, **kwargs
 ) -> Markdown:
     """Helper function to create a KfpUiMetadata Markdown object.
 
     Args:
-        source (str): Full path to the markdown or the actual markdown
+        source (Union[str, KfpArtifact]): Full path to the markdown or the actual markdown
             text.
         storage (Optional[Union[KfpStorage, str]], optional): Set "inline"
             if source has the actual markdown text. Defaults to None.
@@ -59,11 +60,11 @@ def markdown(
     Returns:
         Markdown: pydantic data object.
     """
-    return Markdown(source=source, storage=storage, **kwargs)
+    return Markdown(source=str(source), storage=storage, **kwargs)
 
 
 def roc(
-    source: str, artifact_format: Union[KfpArtifactDataFormat, str] = "csv", **kwargs
+    source: Union[str, KfpArtifact], artifact_format: Union[KfpArtifactDataFormat, str] = "csv", **kwargs
 ) -> Roc:
     """Helper function to create a KfpUiMetadata Roc object.
 
@@ -73,18 +74,18 @@ def roc(
     - thresholds
 
     Args:
-        source (str): Full path to roc data.
+        source (Union[str, KfpArtifact]): Full path to roc data.
         artifact_format (Union[KfpArtifactDataFormat, str], optional):
             Data format for the artifact. Defaults to "csv".
 
     Returns:
         Roc: pydantic data object.
     """
-    return Roc(source=source, artifact_format=artifact_format, **kwargs)
+    return Roc(source=str(source), artifact_format=artifact_format, **kwargs)
 
 
 def table(
-    source: str,
+    source: Union[str, KfpArtifact],
     header: List[str],
     artifact_format: Union[KfpArtifactDataFormat, str] = "csv",
     **kwargs,
@@ -92,7 +93,7 @@ def table(
     """Helper function to create a KfpUiMetadata Table object.
 
     Args:
-        source (str): Full path to the data.
+        source (Union[str, KfpArtifact]): Full path to the data.
         header (List[str]): Headers to use for the table.
         artifact_format (Union[KfpArtifactDataFormat, str], optional):
             Data format for the artifact. Defaults to "csv".
@@ -101,32 +102,33 @@ def table(
         Table: pydantic data object.
     """
     return Table(
-        source=source, header=header, artifact_format=artifact_format, **kwargs
+        source=str(source), header=header, artifact_format=artifact_format, **kwargs
     )
 
 
-def tensorboard(source: str, **kwargs) -> Tensorboard:
+def tensorboard(source: Union[str, KfpArtifact], **kwargs) -> Tensorboard:
     """Helper function to create a KfpUiMetadata Tensorboard object.
 
     Args:
-        source (str): The full path to the tensorboard logs. Supports * wildcards.
+        source (Union[str, KfpArtifact]): The full path to the tensorboard logs. Supports * wildcards.
 
     Returns:
         Tensorboard: pydantic data object.
     """
-    return Tensorboard(source=source, **kwargs)
+    return Tensorboard(source=str(source), **kwargs)
 
 
-def web_app(source: str, **kwargs) -> WebApp:
+def web_app(source: Union[str, KfpArtifact], **kwargs) -> WebApp:
     """Helper function to create a KfpUiMetadata WebApp object.
 
     Args:
-        source (str): The full path to the html content or inlined html.
+        source (Union[str, KfpArtifact]): The full path to the html content or inlined html.
 
     Returns:
         WebApp: pydantic data object.
     """
-    return WebApp(source=source, **kwargs)
+
+    return WebApp(source=str(source), **kwargs)
 
 
 def kfp_ui_metadata(
