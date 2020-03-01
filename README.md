@@ -52,8 +52,40 @@ def test_op(
 ):
     "A test kubeflow pipeline task."
 
+    import json
+
     import kfx.dsl
     import kfx.vis
+    import kfx.vis.vega
+
+    data = [
+        {"a": "A", "b": 28},
+        {"a": "B", "b": 55},
+        {"a": "C", "b": 43},
+        {"a": "D", "b": 91},
+        {"a": "E", "b": 81},
+        {"a": "F", "b": 53},
+        {"a": "G", "b": 19},
+        {"a": "H", "b": 87},
+        {"a": "I", "b": 52},
+    ]
+    vega_data_file.write(json.dumps(data))
+
+    # `KfpArtifact` provides the reference to data artifact created
+    # inside this task
+    spec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+        "description": "A simple bar chart",
+        "data": {
+            "url": kfx.dsl.KfpArtifact("vega_data_file"),
+            "format": {"type": "json"},
+        },
+        "mark": "bar",
+        "encoding": {
+            "x": {"field": "a", "type": "ordinal"},
+            "y": {"field": "b", "type": "quantitative"},
+        },
+    }
 
     # write the markdown to the `markdown-data` artifact
     markdown_data_file.write("### hello world")
@@ -61,10 +93,14 @@ def test_op(
     # creates an ui metadata object
     ui_metadata = kfx.vis.kfp_ui_metadata(
         # Describes the vis to generate in the kubeflow pipeline UI.
-        # In this case, a markdown vis from a markdown artifact.
-        [kfx.vis.markdown(kfx.dsl.kfp_artifact("markdown_data_file"))]
-        # `kfp_artifact` provides the reference to data artifact created
-        # inside this task
+        [
+            # markdown vis from a markdown artifact.
+            # `KfpArtifact` provides the reference to data artifact created
+            # inside this task
+            kfx.vis.markdown(kfx.dsl.KfpArtifact("markdown_data_file")),
+            # a vega web app from the vega data artifact.
+            kfx.vis.vega.vega_web_app(spec),
+        ]
     )
 
     # writes the ui metadata object as the `mlpipeline-ui-metadata` artifact
