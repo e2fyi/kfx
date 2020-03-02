@@ -86,9 +86,9 @@
 
 """
 from kfx.dsl._artifact_location import (
+    KfpArtifact,
     WorkflowVars,
     ArtifactLocationHelper,
-    KfpArtifact,
     set_workflow_env,
     set_pod_metadata_envs,
 )
