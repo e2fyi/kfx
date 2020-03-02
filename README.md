@@ -17,8 +17,13 @@ following sub-packages
 > - Documentation: [https://kfx.readthedocs.io](https://kfx.readthedocs.io).
 > - Repo: [https://github.com/e2fyi/kfx](https://github.com/e2fyi/kfx)
 
-> ### NOTE this is currently alpha 
+> ### NOTE this is currently alpha
 > There will likely to have breaking changes, and feel free to do a feature request
+>
+> ### Known issues
+> - `kfx.vis.vega.vega_web_app` and `KfpArtifact` does not work well together (see example) because of CORs - the web app is hosted inside an iFrame which prevents it from accessing the `ml-pipeline-ui` API server.
+> - `kfx.vis.vega.vega_web_app` is only supported in the latest kubeflow pipeline UI (as inline is only supported after `0.2.5`)
+
 
 ## Quick start
 
