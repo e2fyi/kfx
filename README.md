@@ -17,6 +17,9 @@ following sub-packages
 > - Documentation: [https://kfx.readthedocs.io](https://kfx.readthedocs.io).
 > - Repo: [https://github.com/e2fyi/kfx](https://github.com/e2fyi/kfx)
 
+> ### NOTE this is currently alpha 
+> There will likely to have breaking changes, and feel free to do a feature request
+
 ## Quick start
 
 Installation
