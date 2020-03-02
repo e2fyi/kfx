@@ -1,5 +1,6 @@
 """Functions to help generate Vega or Vega-Lite spec as web-app in kubeflow pipeline UI."""
 import json
+import urllib.parse
 
 from typing import Any
 
@@ -33,7 +34,7 @@ def _vega_embed_html(
   <script src="https://cdn.jsdelivr.net/npm/vega@{vega}"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-lite@{vega_lite}"></script>
   <!-- Import vega-embed -->
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
   <title>{title}</title>
   <style>
     html, body {{
@@ -73,7 +74,7 @@ def _kfp_ui_api(kfp_artifact: kfx.dsl.KfpArtifact) -> str:
     Returns:
         str: path to the api to get the artifact.
     """
-    return f"artifacts/get?source={kfp_artifact.source}&bucket={kfp_artifact.bucket}&key={kfp_artifact.key}"
+    return f"artifacts/get?source={kfp_artifact.storage}&bucket={urllib.parse.quote_plus(kfp_artifact.bucket)}&key={urllib.parse.quote_plus(kfp_artifact.key)}"
 
 
 def _kfp_artifact_to_api(obj: Any) -> Any:

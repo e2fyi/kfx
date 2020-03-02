@@ -265,7 +265,7 @@ class ArtifactLocationHelper:
         return set_workflow_envs
 
 
-def _sanitize_artifact_name(name: str) -> str:
+def _sanitize_artifact_name(name: str, sanitize: bool = True) -> str:
     """Sanitize the artifact name based on k8s resource naming convention.
 
     Also remove suffixes "_path" and "_file". (See this `comment <https://github.com/kubeflow/pipelines/blob/4cb81ea047361ddce7ce8b0b68133b0a92724588/sdk/python/kfp/components/_python_op.py#L327>'_.)
@@ -273,6 +273,7 @@ def _sanitize_artifact_name(name: str) -> str:
 
     Args:
         name (str): [description]
+        sanitize (bool, optional): Whether to sanitize the name. Defaults to True.
 
     Returns:
         str: [description]
@@ -281,13 +282,13 @@ def _sanitize_artifact_name(name: str) -> str:
         name = name[0 : -len("_path")]
     elif name.endswith("_file"):
         name = name[0 : -len("_file")]
-    return sanitize_k8s_name(name)  # type: ignore
+    return sanitize_k8s_name(name) if sanitize else name  # type: ignore
 
 
 class KfpArtifact:
     """Class to represent a kubeflow pipeline artifact created inside the pipeline task."""
 
-    def __init__(self, name: str, ext: str = ".tgz", sanitize_name: bool = True):
+    def __init__(self, name: str, ext: str = ".tgz", sanitize_name: bool = False):
         """Reference to a kfp artifact that is created within the kubeflow pipeline task.
 
         This function should be used inside the kfp task. It returns the artifact uri,
@@ -382,7 +383,7 @@ class KfpArtifact:
         Args:
             name (str): name of the artifact.
             ext (str, optional): extension for the artifact. Defaults to ".tgz".
-            sanitize_name (bool, optional): whether to sanitize the artifact name. Defaults to True.
+            sanitize_name (bool, optional): whether to sanitize the artifact name. Defaults to False.
 
         Returns:
             str: uri to the artifact which can be provided to kfp ui.
@@ -391,7 +392,7 @@ class KfpArtifact:
         self.bucket = os.environ[ArtifactLocationHelper.artifact_bucket_env]
         self.key_prefix = os.environ[ArtifactLocationHelper.artifact_key_prefix_env]
         self.prefix = os.environ[ArtifactLocationHelper.artifact_prefix_env]
-        self.name = _sanitize_artifact_name(name) if sanitize_name else name
+        self.name = _sanitize_artifact_name(name, sanitize_name)
         self.ext = ext
         self.key = os.path.join(
             self.key_prefix, "%s-%s%s" % (self.prefix, self.name, self.ext)

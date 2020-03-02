@@ -128,17 +128,19 @@ def test_artifact_location_helper(tmp_path):
         import kfx.vis
         import kfx.vis.vega
 
-        data = [
-            {"a": "A", "b": 28},
-            {"a": "B", "b": 55},
-            {"a": "C", "b": 43},
-            {"a": "D", "b": 91},
-            {"a": "E", "b": 81},
-            {"a": "F", "b": 53},
-            {"a": "G", "b": 19},
-            {"a": "H", "b": 87},
-            {"a": "I", "b": 52},
-        ]
+        data = {
+            "data": [
+                {"a": "A", "b": 28},
+                {"a": "B", "b": 55},
+                {"a": "C", "b": 43},
+                {"a": "D", "b": 91},
+                {"a": "E", "b": 81},
+                {"a": "F", "b": 53},
+                {"a": "G", "b": 19},
+                {"a": "H", "b": 87},
+                {"a": "I", "b": 52},
+            ]
+        }
         vega_data_file.write(json.dumps(data))
 
         spec = {
@@ -146,7 +148,7 @@ def test_artifact_location_helper(tmp_path):
             "description": "A simple bar chart",
             "data": {
                 "url": kfx.dsl.KfpArtifact("vega_data_file"),
-                "format": {"type": "json"},
+                "format": {"type": "json", "property": "data"},
             },
             "mark": "bar",
             "encoding": {
@@ -195,10 +197,10 @@ def test_kfp_artifact():
 
     assert (
         str(kfx.dsl.KfpArtifact("some_artifact_file"))
-        == "gcs://your_bucket/pipelines/artifact/test-task-some-artifact.tgz"
+        == "gcs://your_bucket/pipelines/artifact/test-task-some_artifact.tgz"
     )
 
     assert (
         str(kfx.dsl.KfpArtifact("some_artifact_path"))
-        == "gcs://your_bucket/pipelines/artifact/test-task-some-artifact.tgz"
+        == "gcs://your_bucket/pipelines/artifact/test-task-some_artifact.tgz"
     )
