@@ -47,7 +47,9 @@ def confusion_matrix(
 
 
 def markdown(
-    source: Union[str, KfpArtifact], storage: Optional[Union[KfpStorage, str]] = None, **kwargs
+    source: Union[str, KfpArtifact],
+    storage: Optional[Union[KfpStorage, str]] = None,
+    **kwargs,
 ) -> Markdown:
     """Helper function to create a KfpUiMetadata Markdown object.
 
@@ -64,7 +66,9 @@ def markdown(
 
 
 def roc(
-    source: Union[str, KfpArtifact], artifact_format: Union[KfpArtifactDataFormat, str] = "csv", **kwargs
+    source: Union[str, KfpArtifact],
+    artifact_format: Union[KfpArtifactDataFormat, str] = "csv",
+    **kwargs,
 ) -> Roc:
     """Helper function to create a KfpUiMetadata Roc object.
 

@@ -174,8 +174,8 @@ def test_artifact_location_helper(tmp_path):
 
     outfile = tmp_path / "pipeline.yaml"
     Compiler().compile(test_pipeline, str(outfile))
-    print(outfile.read_text())
-    assert False
+    # print(outfile.read_text())
+    # assert False
 
 
 def test_kfp_artifact():
