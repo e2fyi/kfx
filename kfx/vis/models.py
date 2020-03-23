@@ -1,5 +1,5 @@
 """Data models for generating visualization in Kubeflow pipelines UI."""
-from typing import List, Union, Optional
+from typing import Any, List, Union, Optional
 
 from pydantic import Field, BaseModel
 
@@ -10,6 +10,20 @@ from kfx.vis.enums import (
     KfpMetricFormat,
     KfpArtifactDataFormat,
 )
+
+
+def _write_to(datamodel: BaseModel, obj: Any):
+    """Write json string of a data model to a `kfp.components.OutputPath` or `kfp.components.OutputTextFile` obj.
+
+    Args:
+        datamodel (BaseModel): pydantic model object.
+        obj (Any): `kfp.components.OutputPath` or `kfp.components.OutputTextFile`
+    """
+    if hasattr(obj, "write"):
+        obj.write(datamodel.json(exclude_none=True, by_alias=True))
+    else:
+        with open(str(obj), "w") as writer:
+            writer.write(datamodel.json(exclude_none=True, by_alias=True))
 
 
 class KfpArtifactSchema(BaseModel):
@@ -323,6 +337,14 @@ class KfpUiMetadata(BaseModel):
         [], description="List of objects describing the desired kfp visualizations."
     )
 
+    def write_to(self, obj: Any):
+        """Writes kubeflow metrics object to a path or a File-like object.
+
+        Args:
+            obj (Any): Path or File-like object.
+        """
+        _write_to(self, obj)
+
 
 class KfpMetric(BaseModel):
     """Describes a single metric from a kubeflow pipeline task."""
@@ -343,3 +365,11 @@ class KfpMetrics(BaseModel):
     """Describes the metrics outputs of a kubeflow pipeline task."""
 
     metrics: List[KfpMetric] = Field([], description="A list of KfpMetric objects.")
+
+    def write_to(self, obj: Any):
+        """Writes kubeflow metrics object to a path or a File-like object.
+
+        Args:
+            obj (Any): Path or File-like object.
+        """
+        _write_to(self, obj)

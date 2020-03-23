@@ -10,9 +10,9 @@
 `kfx` is a python package with the namespace `kfx`. Currently, it provides the
 following sub-packages
 
-- `kfx.lib.dsl` - Extensions to yje kubeflow pipeline dsl.
+- `kfx.lib.dsl` - Extensions to the kubeflow pipeline dsl.
 
-- `kfx.lib.vis` - Data models and helpers to help generate the `mlpipeline-ui-metadata.json` required to render visualization in the kubeflow pipeline UI. See [Visualize Results in the Pipelines UI](https://www.kubeflow.org/docs/pipelines/sdk/output-viewer/)
+- `kfx.lib.vis` - Data models and helpers to help generate the  `mlpipeline-metrics.json` and `mlpipeline-ui-metadata.json` required to render visualization in the kubeflow pipeline UI. See also https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/ and https://www.kubeflow.org/docs/pipelines/sdk/output-viewer/
 
 > - Documentation: [https://kfx.readthedocs.io](https://kfx.readthedocs.io).
 > - Repo: [https://github.com/e2fyi/kfx](https://github.com/e2fyi/kfx)
@@ -126,38 +126,50 @@ def test_pipeline():
 
 ```
 
-Example: Using [pydantic](https://pydantic-docs.helpmanual.io/) data models to generate
-[`mlpipeline_ui_metadata`](https://www.kubeflow.org/docs/pipelines/sdk/output-viewer/).
+Example: Using `pydantic` data models to generate `mlpipeline-metrics.json` and
+`mlpipeline-ui-metadata.json`.
 
-> `kfx.vis` has helper functions (with corresponding hints) to describe and create a
-> [`mlpipeline_ui_metadata.json`](https://www.kubeflow.org/docs/pipelines/sdk/output-viewer/)
-> file (required by kubeflow pipeline UI to render any visualizations).
+(See also https://www.kubeflow.org/docs/pipelines/sdk/output-viewer/ and
+https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/).
+
+> `kfx.vis` has helper functions (with corresponding hints) to describe and
+> create `mlpipeline-metrics.json` and `mlpipeline-ui-metadata.json` files
+> (required by kubeflow pipeline UI to render any metrics or visualizations).
 
 ```python
+import functools
+
 import kfp.components
-import kfx.vis
-
-from kfx.vis.enums import KfpStorage, KfpMetricFormat
 
 
-@func_to_container_op
+# install kfx
+kfx_component = functools.partial(kfp.components.func_to_container_op, packages_to_install=["kfx"])
+
+
+@kfx_component
 def some_op(
-    mlpipeline_metrics: OutputTextFile(str), mlpipeline_ui_metadata: OutputTextFile(str),
+    # mlpipeline_metrics is a path - i.e. open(mlpipeline_metrics, "w")
+    mlpipeline_metrics: kfp.components.OutputPath(str),
+    # mlpipeline_ui_metadata is a FileLike obj - i.e. mlpipeline_ui_metadata.write("something")
+    mlpipeline_ui_metadata: kfp.components.OutputTextFile(str),
 ):
-    "kfp operator that provides metadata and metrics for visualizations."
+    "kfp operator that provides metrics and metadata for visualizations."
 
-    # create metrics
-    metrics = kfp_metrics([
+    # import inside kfp task
+    import kfx.vis
+
+    # output metrics to mlpipeline_metrics path
+    kfx.vis.kfp_metrics([
+        # render as percent
+        kfx.vis.kfp_metric("recall-score", 0.9, percent=true),
         # override metric format with custom value
-        kfp_metric(name="accuracy-score", value=0.8, metric_format="PERCENTAGE"),
-        # render recall as percent
-        kfp_metric("recall-score", 0.9, percent=true),
-        # raw score
-        kfp_metric("raw-score", 123.45),
-    ])
+        kfx.vis.kfp_metric(name="percision-score", value=0.8, metric_format="PERCENTAGE"),
+        # render raw score
+        kfx.vis.kfp_metric("raw-score", 123.45),
+    ]).write_to(mlpipeline_metrics)
 
-    # create ui metadata for vis
-    ui_metadata = kfx.vis.kfp_ui_metadata(
+    # output visualization metadata to mlpipeline_ui_metadata obj
+    kfx.vis.kfp_ui_metadata(
         [
             # creates a confusion matrix vis
             kfx.vis.confusion_matrix(
@@ -208,12 +220,7 @@ def some_op(
                 }
             })
         ]
-    )
-
-    # write metrics to kubeflow pipelines UI
-    mlpipeline_metrics.write(kfx.vis.asjson(metrics))
-    # write ui metadata so that kubeflow pipelines UI can render visualizations
-    mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
+    ).write_to(mlpipeline_ui_metadata)
 ```
 
 ## Developer guide
