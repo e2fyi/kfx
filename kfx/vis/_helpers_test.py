@@ -161,3 +161,23 @@ def test_ui_metadata():
         ]
     )
     assert kfxvis.asdict(data) == expected, "generates json for kfp ui metadata"
+
+
+def test_kfp_metrics():
+    expected = {
+        "metrics": [
+            {"name": "foo-bar1", "numberValue": 1.0, "format": "PERCENTAGE"},
+            {"name": "foo-bar2", "numberValue": 1000, "format": "RAW"},
+            {"name": "foo-bar3", "numberValue": 1000.0},
+        ]
+    }
+    data = kfxvis.kfp_metrics(
+        [
+            kfxvis.kfp_metric("foo-bar1", 1.0, True),
+            kfxvis.kfp_metric(
+                name="foo-bar2", value=1000, metric_format=kfxvis.KfpMetricFormat.RAW
+            ),
+            kfxvis.kfp_metric("foo-bar3", 1000.0),
+        ]
+    )
+    assert kfxvis.asdict(data) == expected, "generates json for kfp metrics"

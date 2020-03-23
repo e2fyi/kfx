@@ -34,7 +34,6 @@
             {"a": "H", "b": 87},
             {"a": "I", "b": 52},
         ]
-        vega_data_file.write(json.dumps(data))
 
         # `KfpArtifact` provides the reference to data artifact created
         # inside this task
@@ -42,8 +41,7 @@
             "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
             "description": "A simple bar chart",
             "data": {
-                "url": kfx.dsl.KfpArtifact("vega_data_file"),
-                "format": {"type": "json"},
+                "values": data,
             },
             "mark": "bar",
             "encoding": {

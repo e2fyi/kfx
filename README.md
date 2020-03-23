@@ -18,12 +18,13 @@ following sub-packages
 > - Repo: [https://github.com/e2fyi/kfx](https://github.com/e2fyi/kfx)
 
 > ### NOTE this is currently alpha
+>
 > There will likely to have breaking changes, and feel free to do a feature request
 >
 > ### Known issues
+>
 > - `kfx.vis.vega.vega_web_app` and `KfpArtifact` does not work well together (see example) because of CORs - the web app is hosted inside an iFrame which prevents it from accessing the `ml-pipeline-ui` API server.
 > - `kfx.vis.vega.vega_web_app` is only supported in the latest kubeflow pipeline UI (as inline is only supported after `0.2.5`)
-
 
 ## Quick start
 
@@ -66,27 +67,23 @@ def test_op(
     import kfx.vis
     import kfx.vis.vega
 
-    data = [
-        {"a": "A", "b": 28},
-        {"a": "B", "b": 55},
-        {"a": "C", "b": 43},
-        {"a": "D", "b": 91},
-        {"a": "E", "b": 81},
-        {"a": "F", "b": 53},
-        {"a": "G", "b": 19},
-        {"a": "H", "b": 87},
-        {"a": "I", "b": 52},
-    ]
-    vega_data_file.write(json.dumps(data))
-
     # `KfpArtifact` provides the reference to data artifact created
     # inside this task
     spec = {
         "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
         "description": "A simple bar chart",
         "data": {
-            "url": kfx.dsl.KfpArtifact("vega_data_file"),
-            "format": {"type": "json"},
+            "values": [
+                {"a": "A", "b": 28},
+                {"a": "B", "b": 55},
+                {"a": "C", "b": 43},
+                {"a": "D", "b": 91},
+                {"a": "E", "b": 81},
+                {"a": "F", "b": 53},
+                {"a": "G", "b": 19},
+                {"a": "H", "b": 87},
+                {"a": "I", "b": 52},
+            ]
         },
         "mark": "bar",
         "encoding": {
@@ -140,14 +137,27 @@ Example: Using [pydantic](https://pydantic-docs.helpmanual.io/) data models to g
 import kfp.components
 import kfx.vis
 
-from kfx.vis.enums import KfpStorage
+from kfx.vis.enums import KfpStorage, KfpMetricFormat
 
 
 @func_to_container_op
-def some_op(mlpipeline_ui_metadata: OutputTextFile(str)):
-    "kfp operator that provides metadata for visualizations."
+def some_op(
+    mlpipeline_metrics: OutputTextFile(str), mlpipeline_ui_metadata: OutputTextFile(str),
+):
+    "kfp operator that provides metadata and metrics for visualizations."
 
-    mlpipeline_ui_metadata = kfx.vis.kfp_ui_metadata(
+    # create metrics
+    metrics = kfp_metrics([
+        # override metric format with custom value
+        kfp_metric(name="accuracy-score", value=0.8, metric_format="PERCENTAGE"),
+        # render recall as percent
+        kfp_metric("recall-score", 0.9, percent=true),
+        # raw score
+        kfp_metric("raw-score", 123.45),
+    ])
+
+    # create ui metadata for vis
+    ui_metadata = kfx.vis.kfp_ui_metadata(
         [
             # creates a confusion matrix vis
             kfx.vis.confusion_matrix(
@@ -180,11 +190,30 @@ def some_op(mlpipeline_ui_metadata: OutputTextFile(str)):
             kfx.vis.web_app(
                 "gs://your_project/your_bucket/your_html_file",
             ),
+            # creates a Vega-Lite vis as a web app
+            kfx.vis.vega_web_app(spec={
+                "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+                "description": "A simple bar chart with embedded data.",
+                "data": {
+                    "values": [
+                        {"a": "A", "b": 28}, {"a": "B", "b": 55}, {"a": "C", "b": 43},
+                        {"a": "D", "b": 91}, {"a": "E", "b": 81}, {"a": "F", "b": 53},
+                        {"a": "G", "b": 19}, {"a": "H", "b": 87}, {"a": "I", "b": 52}
+                    ]
+                },
+                "mark": "bar",
+                "encoding": {
+                    "x": {"field": "a", "type": "ordinal"},
+                    "y": {"field": "b", "type": "quantitative"}
+                }
+            })
         ]
     )
 
+    # write metrics to kubeflow pipelines UI
+    mlpipeline_metrics.write(kfx.vis.asjson(metrics))
     # write ui metadata so that kubeflow pipelines UI can render visualizations
-    mlpipeline_ui_metadata.write(kfx.vis.asjson(mlpipeline_ui_metadata))
+    mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
 ```
 
 ## Developer guide
@@ -208,6 +237,7 @@ The version of the package is read from `version.txt` - i.e. please update the
 appropriate semantic version (major -> breaking changes, minor -> new features, patch -> bug fix, postfix -> pre-release/post-release).
 
 ### `Makefile`:
+
 ```bash
 # autoformat codes with docformatter, isort, and black
 make format

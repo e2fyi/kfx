@@ -265,7 +265,17 @@ class ArtifactLocationHelper:
         return set_workflow_envs
 
 
-def _sanitize_artifact_name(name: str, sanitize: bool = True) -> str:
+def _handle_special_artifact_names(name: str) -> str:
+    """Always sanitize special artifact names (e.g. mlpipeline_ui_metadata)"""
+    sanitized: str = sanitize_k8s_name(name)
+    return (
+        sanitized
+        if sanitized in {"mlpipeline-ui-metadata", "mlpipeline-metrics"}
+        else name
+    )
+
+
+def _sanitize_artifact_name(name: str, sanitize: bool = False) -> str:
     """Sanitize the artifact name based on k8s resource naming convention.
 
     Also remove suffixes "_path" and "_file". (See this `comment <https://github.com/kubeflow/pipelines/blob/4cb81ea047361ddce7ce8b0b68133b0a92724588/sdk/python/kfp/components/_python_op.py#L327>'_.)
@@ -273,7 +283,7 @@ def _sanitize_artifact_name(name: str, sanitize: bool = True) -> str:
 
     Args:
         name (str): [description]
-        sanitize (bool, optional): Whether to sanitize the name. Defaults to True.
+        sanitize (bool, optional): Whether to sanitize the name. Defaults to False.
 
     Returns:
         str: [description]
@@ -282,7 +292,10 @@ def _sanitize_artifact_name(name: str, sanitize: bool = True) -> str:
         name = name[0 : -len("_path")]
     elif name.endswith("_file"):
         name = name[0 : -len("_file")]
-    return sanitize_k8s_name(name) if sanitize else name  # type: ignore
+
+    return (  # type: ignore
+        sanitize_k8s_name(name) if sanitize else _handle_special_artifact_names(name)
+    )
 
 
 class KfpArtifact:
@@ -329,7 +342,6 @@ class KfpArtifact:
                     {"a": "H", "b": 87},
                     {"a": "I", "b": 52},
                 ]
-                vega_data_file.write(json.dumps(data))
 
                 # `KfpArtifact` provides the reference to data artifact created
                 # inside this task
@@ -337,8 +349,7 @@ class KfpArtifact:
                     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
                     "description": "A simple bar chart",
                     "data": {
-                        "url": kfx.dsl.KfpArtifact("vega_data_file"),
-                        "format": {"type": "json"},
+                        "values": data,
                     },
                     "mark": "bar",
                     "encoding": {

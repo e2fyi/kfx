@@ -3,7 +3,13 @@ from typing import List, Union, Optional
 
 from pydantic import Field, BaseModel
 
-from kfx.vis.enums import KfpStorage, KfpVisType, KfpDataType, KfpArtifactDataFormat
+from kfx.vis.enums import (
+    KfpStorage,
+    KfpVisType,
+    KfpDataType,
+    KfpMetricFormat,
+    KfpArtifactDataFormat,
+)
 
 
 class KfpArtifactSchema(BaseModel):
@@ -316,3 +322,24 @@ class KfpUiMetadata(BaseModel):
     ] = Field(
         [], description="List of objects describing the desired kfp visualizations."
     )
+
+
+class KfpMetric(BaseModel):
+    """Describes a single metric from a kubeflow pipeline task."""
+
+    name: str = Field(
+        ...,
+        description="Name of the metric. Must be format: ^[a-z]([-a-z0-9]{0,62}[a-z0-9])?$",
+    )
+    numberValue: Union[float, int] = Field(
+        ..., description="Numerical value of the metric."
+    )
+    format: Optional[KfpMetricFormat] = Field(
+        None, description="can only be PERCENTAGE, RAW, or not set"
+    )
+
+
+class KfpMetrics(BaseModel):
+    """Describes the metrics outputs of a kubeflow pipeline task."""
+
+    metrics: List[KfpMetric] = Field([], description="A list of KfpMetric objects.")

@@ -1,5 +1,5 @@
 """Helper functions for generating visualization in Kubeflow pipelines UI."""
-from typing import List, Union, Optional
+from typing import List, Union, Iterable, Optional
 
 from pydantic import BaseModel
 
@@ -9,10 +9,13 @@ from kfx.vis.models import (
     Table,
     WebApp,
     Markdown,
+    KfpMetric,
+    KfpMetrics,
     KfpStorage,
     Tensorboard,
     KfpUiMetadata,
     ConfusionMatrix,
+    KfpMetricFormat,
     KfpArtifactDataFormat,
 )
 
@@ -152,6 +155,44 @@ def kfp_ui_metadata(
         KfpUiMetadata: pydantic data object.
     """
     return KfpUiMetadata(version=version, outputs=outputs)
+
+
+def kfp_metric(
+    name: str,
+    value: Union[float, int],
+    percent: bool = False,
+    metric_format: Union[str, KfpMetricFormat] = None,
+) -> KfpMetric:
+    """Describes a single kubeflow pipeline metric.
+
+    Args:
+        name (str): Name of the metric. Must be of the form `^[a-z]([-a-z0-9]{0,62}[a-z0-9])?$`.
+        value (Union[float, int]): Numerical value of the metric.
+        percent (bool, optional): Set to True to render value as percentage. Defaults to False.
+        metric_format (Union[str, KfpMetricFormat], optional): Format for the metrics - "PERCENTAGE", "RAW" or None. Overrides "percent" flag if provided. Defaults to None.
+
+    Returns:
+        KfpMetric: an instance of KfpMetric to be passed to a KfpMetrics object.
+    """
+    if not metric_format and percent:
+        metric_format = KfpMetricFormat.PERCENTAGE
+    return KfpMetric(name=name, numberValue=value, format=metric_format)
+
+
+def kfp_metrics(
+    metrics: Union[
+        Iterable[KfpMetric], Iterable[dict], Iterable[Union[KfpMetric, dict]]
+    ]
+) -> KfpMetrics:
+    """Describes a list of kubeflow pipeline metrics.
+
+    Args:
+        metrics (Union[Iterable[KfpMetric], Iterable[dict], Iterable[Union[KfpMetric, dict]]]): Any iterable of dict or KfpMetric.
+
+    Returns:
+        KfpMetrics: an instance of KfpMetrics which can be stream to the output.
+    """
+    return KfpMetrics(metrics=metrics)
 
 
 def asdict(obj: BaseModel) -> dict:

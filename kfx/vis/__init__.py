@@ -5,14 +5,16 @@
     import kfp.components
     import kfx.vis
 
-    from kfx.vis.enums import KfpStorage
+    from kfx.vis.enums import KfpStorage, KfpMetricFormat
 
 
     @func_to_container_op
-    def some_op(mlpipeline_ui_metadata: OutputTextFile(str)):
+    def some_op(
+        mlpipeline_ui_metadata: OutputTextFile(str), mlpipeline_metrics: OutputTextFile(str)
+    ):
         "kfp operator that provides metadata for visualizations."
 
-        mlpipeline_ui_metadata = kfx.vis.kfp_ui_metadata(
+        ui_metadata = kfx.vis.kfp_ui_metadata(
             [
                 # creates a confusion matrix vis
                 kfx.vis.confusion_matrix(
@@ -66,7 +68,21 @@
         )
 
         # write ui metadata so that kubeflow pipelines UI can render visualizations
-        mlpipeline_ui_metadata.write(kfx.vis.asjson(mlpipeline_ui_metadata))
+        mlpipeline_ui_metadata.write(kfx.vis.asjson(ui_metadata))
+
+
+        # create metrics
+        metrics = kfp_metrics([
+            # override metric format with custom value
+            kfp_metric(name="accuracy-score", value=0.8, metric_format="PERCENTAGE"),
+            # render recall as percent
+            kfp_metric("recall-score", 0.9, percent=true),
+            # raw score
+            kfp_metric("raw-score", 123.45),
+        ])
+
+        # write metrics to kubeflow pipelines UI
+        mlpipeline_metrics.write(kfx.vis.asjson(metrics))
 
 """
 from kfx.vis._helpers import (
@@ -76,6 +92,8 @@ from kfx.vis._helpers import (
     asjson,
     web_app,
     markdown,
+    kfp_metric,
+    kfp_metrics,
     tensorboard,
     tolocalfile,
     kfp_ui_metadata,

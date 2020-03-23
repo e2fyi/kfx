@@ -38,3 +38,10 @@ class KfpStorage(str, Enum):
     s3 = "s3"
     http = "http"
     https = "https"
+
+
+class KfpMetricFormat(str, Enum):
+    """Metric format."""
+
+    PERCENTAGE = "PERCENTAGE"
+    RAW = "RAW"
