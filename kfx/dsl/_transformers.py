@@ -65,7 +65,9 @@ class ContainerOpTransform:
         Returns:
             kfp.dsl.ContainerOp: ContainerOp obj.
         """
-        [transform(op) for transform in self._transforms]
+        [  # pylint: disable=expression-not-assigned
+            transform(op) for transform in self._transforms
+        ]
         return op
 
     def set_annotations(self, annotations: Dict[str, str]) -> "ContainerOpTransform":
@@ -76,7 +78,10 @@ class ContainerOpTransform:
         """
 
         def set_annotations_transform(op: kfp.dsl.ContainerOp) -> kfp.dsl.ContainerOp:
-            [op.add_pod_annotation(name, value) for name, value in annotations.items()]
+            [  # pylint: disable=expression-not-assigned
+                op.add_pod_annotation(name, value)
+                for name, value in annotations.items()
+            ]
             return op
 
         self._transforms.append(set_annotations_transform)
@@ -90,7 +95,9 @@ class ContainerOpTransform:
         """
 
         def set_labels_transform(op: kfp.dsl.ContainerOp) -> kfp.dsl.ContainerOp:
-            [op.add_pod_label(name, value) for name, value in labels.items()]
+            [  # pylint: disable=expression-not-assigned
+                op.add_pod_label(name, value) for name, value in labels.items()
+            ]
             return op
 
         self._transforms.append(set_labels_transform)
@@ -100,11 +107,11 @@ class ContainerOpTransform:
         """Update the transform function to set the provided env vars to the ContainerOp.
 
         Args:
-            labels (Dict[str, str]): dict of env vars keys and values.
+            env_vars (Dict[str, str]): dict of env vars keys and values.
         """
 
         def set_env_vars_transform(op: kfp.dsl.ContainerOp) -> kfp.dsl.ContainerOp:
-            [
+            [  # pylint: disable=expression-not-assigned
                 op.add_env_variable(k8s.V1EnvVar(name, value))
                 for name, value in env_vars.items()
             ]
@@ -256,10 +263,8 @@ class ContainerOpTransform:
             ContainerOpTransform: updated ContainerOpTransform object.
         """
 
-        def set_sidecar_transform(
-            op: kfp.dsl.ContainerOp
-        ) -> kfp.dsl.ContainerOp:
-            [
+        def set_sidecar_transform(op: kfp.dsl.ContainerOp) -> kfp.dsl.ContainerOp:
+            [  # pylint: disable=expression-not-assigned
                 sidecar.set_image_pull_policy(policy)
                 for sidecar in op.sidecars
                 if fnmatch(sidecar.name, sidecar_name)
