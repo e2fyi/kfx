@@ -17,6 +17,10 @@ with open("version.txt", "r") as filein:
 with open("README.md", "r") as filein:
     readme = filein.read()
 
+with open("CHANGELOG.md", "r") as filein:
+    readme += "\n"
+    readme += filein.read()
+
 setup_requirements: list = [
     "setuptools >= 41.0.0",
     "wheel >= 0.26",

@@ -7,6 +7,7 @@ Welcome to kfx's documentation!
 
 .. mdinclude:: ../README.md
 
+.. mdinclude:: ../CHANGELOG.md
 
 Indices and tables
 ==================

@@ -1,5 +1,42 @@
 """Extension to kfp dsl.
 
+Using `kfx.dsl.ContainerOpTransform` to modify ContainerOp internal properties
+::
+
+    import kfp.components
+    import kfp.dsl
+    import kfx.dsl
+
+    transforms = (
+        kfx.dsl.ContainerOpTransform()
+        .set_resources(cpu="500m", memory=("1G", "4G"))
+        .set_image_pull_policy("Always")
+        .set_env_vars({"ENV": "production"})
+        .set_env_var_from_secret("AWS_ACCESS_KEY", secret_name="aws", secret_key="access_key")
+        .set_annotations({"iam.amazonaws.com/role": "some-arn"})
+    )
+
+
+    @kfp.dsl.components.func_to_container_op
+    def echo(text: str) -> str:
+        print(text)
+        return text
+
+
+    @kfp.dsl.pipeline(name="demo")
+    def pipeline(text: str):
+        op1 = echo(text)
+        op2 = echo("%s-%s" % text)
+
+        # u can apply the transform on op1 only
+        # op1.apply(transforms)
+
+        # or apply on all ops in the pipeline
+        kfp.dsl.get_pipeline_conf().add_op_transformer(transforms)
+
+
+Using `kfx.dsl.ArtifactLocationHelper` to get the path to an artifact generated
+by a kfp task.
 ::
 
     import kfp.components
@@ -84,9 +121,10 @@
 
 """
 from kfx.dsl._artifact_location import (
+    ArtifactLocationHelper,
     KfpArtifact,
     WorkflowVars,
-    ArtifactLocationHelper,
-    set_workflow_env,
     set_pod_metadata_envs,
+    set_workflow_env,
 )
+from kfx.dsl._transformers import ContainerOpTransform
