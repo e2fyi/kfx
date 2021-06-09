@@ -1,14 +1,14 @@
 """Data models for generating visualization in Kubeflow pipelines UI."""
-from typing import Any, List, Union, Optional
+from typing import Any, List, Optional, Union
 
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 from kfx.vis.enums import (
-    KfpStorage,
-    KfpVisType,
+    KfpArtifactDataFormat,
     KfpDataType,
     KfpMetricFormat,
-    KfpArtifactDataFormat,
+    KfpStorage,
+    KfpVisType,
 )
 
 

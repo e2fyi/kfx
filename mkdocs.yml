@@ -1,0 +1,65 @@
+site_name: kfx
+repo_url: https://github.com/e2fyi/kfx
+strict: false
+
+nav:
+    - Quickstart: index.md
+    - Guide:
+      - Kubeflow Pipeline DSL: kfx-dsl.md
+      - Kubeflow Pipeline Metrics and Metadata UI: kfx-vis.md
+    - Changelog: changelog.md
+
+theme:
+  name: material
+  icon:
+    logo: fontawesome/brands/python
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.expand
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/eterna2
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/william-teo-56021b16
+
+markdown_extensions:
+  - admonition
+  - markdown_include.include
+  - pymdownx.emoji
+  - pymdownx.magiclink
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist
+  - toc:
+      permalink: true
+      # slugify: !!python/name:pymdownx.slugs.uslugify
+
+google_analytics:
+  - UA-180553388-1
+  - auto
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_source: false
+            show_if_no_docstring: true
+            show_root_heading: true
+            show_category_heading: true
+          setup_commands:
+            - import sys
+            - sys.path.append("docs")
+          selection:
+            new_path_syntax: yes
+            filters:
+              - "!^_"  # exlude all members starting with _
+              - "^__init__$"  # but always include __init__ modules and methods
+      watch:
+        - kfx/
+  - git-revision-date-localized:
+      fallback_to_build_date: true

@@ -11,9 +11,9 @@ Using `kfx.dsl.ContainerOpTransform` to modify ContainerOp internal properties
         kfx.dsl.ContainerOpTransform()
         .set_resources(cpu="500m", memory=("1G", "4G"))
         .set_image_pull_policy("Always")
-        .set_env_vars({"ENV": "production"})
-        .set_env_var_from_secret("AWS_ACCESS_KEY", secret_name="aws", secret_key="access_key")
         .set_annotations({"iam.amazonaws.com/role": "some-arn"})
+        .add_env_vars({"ENV": "production"})
+        .add_env_var_from_secret("AWS_ACCESS_KEY", secret_name="aws", secret_key="access_key")
     )
 
 
@@ -120,11 +120,11 @@ by a kfp task.
         op.apply(helper.set_envs())
 
 """
-from kfx.dsl._transformers import ContainerOpTransform
 from kfx.dsl._artifact_location import (
+    ArtifactLocationHelper,
     KfpArtifact,
     WorkflowVars,
-    ArtifactLocationHelper,
-    set_workflow_env,
     set_pod_metadata_envs,
+    set_workflow_env,
 )
+from kfx.dsl._transformers import ContainerOpTransform

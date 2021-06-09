@@ -1,13 +1,11 @@
 """Tests for kfx.lib.utils."""
 import os
-
 from typing import List
 
-import kfp.dsl
 import kfp.compiler
 import kfp.components
+import kfp.dsl
 import kubernetes.client as k8s_client
-
 from kfp.compiler import Compiler
 from kfp.components import OutputTextFile
 

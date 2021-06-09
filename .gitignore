@@ -114,4 +114,4 @@ examples/tmp.py
 .mypy_cache
 
 # documentations
-docs/
+site/

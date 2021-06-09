@@ -68,7 +68,7 @@
                     "gs://your_project/your_bucket/your_html_file",
                 ),
                 # creates a Vega-Lite vis as a web app
-                kfx.vis.vega_web_app(spec={
+                kfx.vis.vega.vega_web_app(spec={
                     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
                     "description": "A simple bar chart with embedded data.",
                     "data": {
@@ -90,16 +90,16 @@
 
 """
 from kfx.vis._helpers import (
-    roc,
-    table,
     asdict,
     asjson,
-    web_app,
-    markdown,
+    confusion_matrix,
     kfp_metric,
     kfp_metrics,
+    kfp_ui_metadata,
+    markdown,
+    roc,
+    table,
     tensorboard,
     tolocalfile,
-    kfp_ui_metadata,
-    confusion_matrix,
+    web_app,
 )

@@ -1,0 +1,21 @@
+[flake8]
+# E203 - Whitespace before ':'              : handled by black
+# E501 - Line too long                      : handled by black
+# W503 - line break before binary operator  : handled by black
+ignore =
+    E203,
+    E501,
+    W503
+exclude =
+    .venv,
+    .git,
+    __pycache__,
+    tests/**,
+    examples/**,
+    build/**,
+    dist/**,
+    rst/**,
+    tmp/**,
+    **/__init__.py,
+max-complexity = 10
+max-line-length = 88

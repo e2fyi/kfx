@@ -1,0 +1,73 @@
+[tool.poetry]
+name = "kfx"
+version = "0.1.0"
+description = "Extensions for kubeflow pipeline sdk."
+keywords = ["kfx","kubeflow","pipelines","contrib","sdk"]
+authors = ["eterna2 <eterna2@hotmail.com>"]
+maintainers = ["eterna2 <eterna2@hotmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [
+    {include = "kfx"}
+]
+exclude = ["kfx/*_test.py", "kfx/**/*_test.py", "kfx/conftest.py"]
+homepage = "https://github.com/e2fyi/kfx"
+repository = "https://github.com/e2fyi/kfx"
+documentation = "https://kfx.readthedocs.io/en/latest/"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/e2fyi/kfx/blob/master/CHANGELOG.md"
+
+[tool.poetry.dependencies]
+python = ">=3.6,<4"
+typing-extensions = "*"
+kfp = ">=0.2.0,<2"
+pydantic = "1.*"
+
+[tool.poetry.dev-dependencies]
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
+mypy = "^0.782"
+flake8 = "^3.8.3"
+pylint = "^2.6.0"
+bandit = "^1.6.2"
+flake8-isort = "^4.0.0"
+flake8-comprehensions = "^3.2.3"
+coverage = "^5.3"
+coveralls = "^2.1.2"
+pytest = "^6.1.1"
+pytest-mock = "^3.3.1"
+autoflake = "^1.4"
+pytest-cov = "^2.10.1"
+safety = "^1.9.0"
+mkdocs-material = "^6.0.2"
+mkdocstrings = "^0.13.6"
+mkdocs-git-revision-date-localized-plugin = "^0.7.2"
+markdown_include = "^0.6.0"
+pydocstyle = "^6.1.1"
+livereload = "^2.6.3"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+known_first_party = ["kfx"]
+known_third_party = []
+
+[tool.black]
+line_length = 88
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
