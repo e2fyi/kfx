@@ -1,11 +1,9 @@
 """Utils."""
 import os
 import os.path
-
 from typing import Callable, NamedTuple
 
 import kfp.dsl
-
 from kubernetes import client as k8s_client
 
 from kfx.dsl._compat import sanitize_k8s_name

@@ -1,6 +1,6 @@
 """Test for ContainerOp transformers."""
-import pytest
 import kfp.dsl
+import pytest
 
 from kfx.dsl._transformers import ContainerOpTransform
 

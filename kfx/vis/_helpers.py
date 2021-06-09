@@ -1,22 +1,22 @@
 """Helper functions for generating visualization in Kubeflow pipelines UI."""
-from typing import List, Union, Iterable, Optional
+from typing import Iterable, List, Optional, Union
 
 from pydantic import BaseModel
 
 from kfx.dsl import KfpArtifact
 from kfx.vis.models import (
-    Roc,
-    Table,
-    WebApp,
-    Markdown,
+    ConfusionMatrix,
+    KfpArtifactDataFormat,
     KfpMetric,
+    KfpMetricFormat,
     KfpMetrics,
     KfpStorage,
-    Tensorboard,
     KfpUiMetadata,
-    ConfusionMatrix,
-    KfpMetricFormat,
-    KfpArtifactDataFormat,
+    Markdown,
+    Roc,
+    Table,
+    Tensorboard,
+    WebApp,
 )
 
 KFP_UI_METADATA_PATH = "/mlpipeline-ui-metadata.json"

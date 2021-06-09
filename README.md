@@ -247,7 +247,7 @@ def some_op(
                 "gs://your_project/your_bucket/your_html_file",
             ),
             # creates a Vega-Lite vis as a web app
-            kfx.vis.vega_web_app(spec={
+            kfx.vis.vega.vega_web_app(spec={
                 "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
                 "description": "A simple bar chart with embedded data.",
                 "data": {

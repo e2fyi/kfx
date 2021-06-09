@@ -1,6 +1,6 @@
 """Transform functions that modify containerOp."""
-from typing import Dict, List, Tuple, Union, Callable
 from fnmatch import fnmatch
+from typing import Callable, Dict, List, Tuple, Union
 
 import kfp.dsl
 import kubernetes.client as k8s
@@ -349,7 +349,7 @@ class ContainerOpTransform:
             memory_limit = memory  # type: ignore
 
         def set_sidecar_resources_transform(
-            op: kfp.dsl.ContainerOp
+            op: kfp.dsl.ContainerOp,
         ) -> kfp.dsl.ContainerOp:
             for sidecar in op.sidecars:
                 if fnmatch(sidecar.name, sidecar_name):

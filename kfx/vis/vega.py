@@ -1,12 +1,10 @@
 """Functions to help generate Vega or Vega-Lite spec as web-app in kubeflow pipeline UI."""
 import json
 import urllib.parse
-
 from typing import Any
 
 import kfx.dsl
 import kfx.vis.models
-
 from kfx.vis._helpers import web_app
 
 

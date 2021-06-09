@@ -1,58 +1,42 @@
-force_reload:
-
-dev:
-	pipenv install --dev
-	pipenv run pip install -e .
-
-dists: requirements sdist bdist wheels
-
-docs: force_reload
-	pipenv run sphinx-build rst docs -b dirhtml -E -P
+.FORCE:
 
 requirements:
-	pipenv run pipenv_to_requirements
+	poetry export -f requirements.txt --output requirements.txt --extras all
+	poetry export -f requirements.txt --output requirements-dev.txt --dev --extras all
 
-sdist: requirements
-	pipenv run python setup.py sdist
+build:
+	poetry build
 
-bdist: requirements
-	pipenv run python setup.py bdist
-
-wheels: requirements
-	pipenv run python setup.py bdist_wheel
-
-publish: dists
-	pipenv run twine upload --verbose --disable-progress-bar dist/*
+publish:
+	poetry publish -u __token__ -p ${PYPI_TOKEN}
 
 format:
 	# docformatter --in-place kfx/**/*.py
-	pipenv run isort kfx -rc
-	pipenv run black kfx
+	poetry run isort kfx
+	poetry run black kfx
 
 check:
-	pipenv run isort kfx -rc -c
-	pipenv run black --check kfx
-	pipenv run pylint kfx
-	pipenv run flake8
-	pipenv run mypy kfx
-	pipenv run pydocstyle
-	pipenv run bandit -r kfx -x *_test.py
+	poetry run isort kfx -c
+	poetry run black --check kfx
+	poetry run pylint kfx
+	poetry run flake8
+	poetry run mypy kfx
+	poetry run bandit -r kfx -x *_test.py
 
 test: check
-	pipenv run pytest --cov=kfx
-
-test-all: test dists
-	pipenv run twine check dist/*
+	poetry run pytest --cov=kfx
 
 test-only: env
-	pipenv run pytest --cov=kfx
+	poetry run pytest --cov=kfx
 
-test-ci: test-all
-	pipenv run coveralls
+test-ci: test
+	poetry run coveralls
 
 schema: force_reload
-	PYTHONPATH=${PWD} ./scripts/generate_schemas.py
+	poetry run python ./scripts/generate_schemas.py
 
-commit: docs requirements force_reload
-	git add .
-	git commit
+docs: .FORCE requirements
+	poetry run mkdocs build
+
+docs-serve: docs
+	cd site/  && poetry run python -m http.server 8000
