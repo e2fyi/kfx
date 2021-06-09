@@ -1,7 +1,7 @@
 # kfx
 
 [![PyPI version](https://badge.fury.io/py/kfx.svg)](https://badge.fury.io/py/kfx)
-[![Build Status](https://travis-ci.org/e2fyi/kfx.svg?branch=master)](https://travis-ci.org/e2fyi/kfx)
+[![Build Status](https://travis-ci.com/e2fyi/kfx.svg?branch=master)](https://travis-ci.com/e2fyi/kfx)
 [![Coverage Status](https://coveralls.io/repos/github/e2fyi/kfx/badge.svg?branch=master)](https://coveralls.io/github/e2fyi/kfx?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/kfx/badge/?version=latest)](https://kfx.readthedocs.io/en/latest/?badge=latest)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
